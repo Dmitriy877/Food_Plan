@@ -178,3 +178,4 @@ cython_debug/
 .idea
 load_data.py
 media
+Makefile
