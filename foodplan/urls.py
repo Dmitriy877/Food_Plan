@@ -20,6 +20,10 @@ from planner import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index),
-    path('order/', views.order),
+    path('', views.index, name='index'),
+    path('order/', views.order, name='order'),
+    path('auth/', views.auth, name='auth'),
+    path('registration/', views.registration, name='registration'),
+    path('lk/', views.lk, name='lk'),
+    path('card/', views.card, name='card'),
 ]
