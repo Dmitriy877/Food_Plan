@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
     <title>План питания на неделю, меню, рецепты, список покупок. Классическое меню, безуглеводное меню</title>
 </head>
 <body>
@@ -14,9 +15,16 @@
         <nav class="navbar navbar-light fixed-top navbar__opacity">
             <div class="container">
                 <a class="navbar-brand" href="#">
-                    <img src="img/logo.8d8f24edbb5f.svg" height="55" width="189" alt="">
+                    <img src="{% static 'img/logo.8d8f24edbb5f.svg' %}" height="55" width="189" alt="">
                 </a>
-                <button class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green">Войти</button>
+                {% if user.is_authenticated %}
+                <form method="POST" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-success shadow-none foodplan_green foodplan__border_green">Выйти</button>
+                </form>
+                {% else %}
+                <a href="{% url 'login' %}" class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green">Войти</a>
+                {% endif %}
             </div>
         </nav>
     </header>
@@ -41,7 +49,7 @@
                 <div class="row d-flex justify-content-center">
                     <div class="col-sm-6 col-lg-3">
                         <div class="card mb-1 foodplan__card_borderless">
-                            <img src="img/circle1.png" class="card-img-top" alt="">
+                            <img src="{% static 'img/circle1.png' %}" class="card-img-top" alt="">
                             <div class="card-body">
                                 <h5 class="card-title"><b>Меню на неделю</b></h5>
                                 <p class="card-text">Итальянская паста, котлеты с пюре или овощное карри - решать вам!
@@ -51,7 +59,7 @@
                     </div>
                     <div class="col-sm-6 col-lg-3">
                         <div class="card mb-1 foodplan__card_borderless">
-                            <img src="img/circle2.png" class="card-img-top" alt="">
+                            <img src="{% static 'img/circle2.png' %}" class="card-img-top" alt="">
                             <div class="card-body">
                                 <h5 class="card-title"><b>Удобный список продуктов</b></h5>
                                 <p class="card-text">С четким списком вы не возьмете лишнего, будете тратить меньше и сможете чаще покупать лосось и морепродукты.</p>
@@ -60,7 +68,7 @@
                     </div>
                     <div class="col-sm-6 col-lg-3">
                         <div class="card mb-1 foodplan__card_borderless">
-                            <img src="img/circle3.png" class="card-img-top" alt="">
+                            <img src="{% static 'img/circle3.png' %}" class="card-img-top" alt="">
                             <div class="card-body">
                                 <h5 class="card-title"><b>Доставка от ВкусВилл</b></h5>
                                 <p class="card-text">Заказывайте доставку продуктов по вашему списку в 1 клик. Все ингредиенты попадут в корзину ВкусВилл автоматически.</p>
@@ -77,28 +85,28 @@
                     <div id="carousel1" class="carousel slide" data-bs-ride="carousel">
                         <div class="carousel-inner">
                             <div class="carousel-item active">
-                                <img src="img/1.jpg" class="d-block w-100" alt="...">
+                                <img src="{% static 'img/1.jpg' %}" class="d-block w-100" alt="...">
                                 <div class="card-img-overlay text-white text-center carousel-item__gradient">
                                     <h5><b>Модный и полезный ужин</b></h5>
                                     <h2><b>Боул с креветками и рисом</b></h2>
                                 </div>
                             </div>
                             <div class="carousel-item">
-                                <img src="img/2.jpg" class="d-block w-100" alt="...">
+                                <img src="{% static 'img/2.jpg' %}" class="d-block w-100" alt="...">
                                 <div class="card-img-overlay text-white text-center carousel-item__gradient">
                                     <h5><b>Интересно, просто и супер вкусно</b></h5>
                                     <h2><b>Тосканский суп с фаршем</b></h2>
                                 </div>
                             </div>
                             <div class="carousel-item">
-                                <img src="img/3.jpg" class="d-block w-100" alt="...">
+                                <img src="{% static 'img/3.jpg' %}" class="d-block w-100" alt="...">
                                 <div class="card-img-overlay text-white text-center carousel-item__gradient">
                                     <h5><b>Понятное всей семье, яркое на вкус</b></h5>
                                     <h2><b>Паприкаш с курицей</b></h2>
                                 </div>
                             </div>
                             <div class="carousel-item">
-                                <img src="img/4.jpg" class="d-block w-100" alt="...">
+                                <img src="{% static 'img/4.jpg' %}" class="d-block w-100" alt="...">
                                 <div class="card-img-overlay text-white text-center carousel-item__gradient">
                                     <h5></h5><b>Летнее удовольствие</b></h5>
                                     <h2><b>Овощной салат с жареным халуми</b></h2>
