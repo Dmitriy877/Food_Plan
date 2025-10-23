@@ -179,3 +179,4 @@ cython_debug/
 load_data.py
 media
 Makefile
+ruff.toml
