@@ -1,0 +1,22 @@
+{% load static %}
+<header>
+    <nav class="navbar navbar-expand-md navbar-light fixed-top navbar__opacity">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <img src="{% static 'img/logo.8d8f24edbb5f.svg' %}" height="55" width="189" alt="">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse1"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse1">
+                <ul class="navbar-nav w-100">
+                    <li class="nav-item align-items-center d-md-flex flex-grow-1 justify-content-end">
+                        <button class="btn btn-outline-success me-2 shadow-none foodplan_green foodplan__border_green">Подписка</button>
+                        <a href="{% url 'login' %}" class="btn btn-outline-success shadow-none foodplan_green foodplan__border_green">Войти</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
