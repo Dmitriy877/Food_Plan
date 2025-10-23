@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 
@@ -13,21 +14,6 @@ def card(request):
     return render(request, 'card1.html')
 
 
-def auth(request):
-    return render(request, 'auth.html')
-
-
-def registration(request):
-    return render(request, 'registration.html')
-
-
+@login_required
 def lk(request):
     return render(request, 'lk.html')
-
-
-
-
-
-
-
-# Create your views here.
