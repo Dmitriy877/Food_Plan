@@ -3,36 +3,77 @@ from django.db import models
 
 
 class Allergy(models.Model):
-    name = models.CharField(max_length=150, verbose_name='Аллергия')
+    name = models.CharField(
+        'Аллергия',
+        max_length=150,
+    )
 
     def __str__(self):
         return self.name
 
 
-class DietType(models.Model):
-    name = models.CharField(max_length=150, verbose_name='Тип диеты')
-
-    def __str__(self):
-        return self.name
+class SubscriptionPlan(models.Model):
+    DURATION_CHOICES = (
+        (1, '1 месяц'),
+        (3, '3 месяца'),
+        (6, '6 месяцев'),
+        (12, '12 месяцев'),
+    )
+    duration = models.IntegerField(
+        'Срок подписки',
+        choices=DURATION_CHOICES,
+        default=1,
+        unique=True,
+        db_index=True,
+    )
+    breakfast_price = models.DecimalField(
+        'Цена подписки на завтраки',
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    lunch_price = models.DecimalField(
+        'Цена подписки на обеды',
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    dinner_price = models.DecimalField(
+        'Цена подписки на ужины',
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    dessert_price = models.DecimalField(
+        'Цена подписки на десерты',
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
 
 
 class UserProfile(models.Model):
+    class DietTypeChoices(models.TextChoices):
+        CLASSIC = 'classic', 'Классическая'
+        LOW_CARB = 'low_carb', 'Низкоуглеводная'
+        VEGETARIAN = 'vegetarian', 'Вегетарианская'
+        KETO = 'keto', 'Кето'
+
     user = models.OneToOneField(
         get_user_model(),
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
     )
+    diet_type = models.CharField(
+        'Тип диеты',
+        choices=DietTypeChoices,
+        default=DietTypeChoices.CLASSIC,
+        db_index=True,
+    )
     allergies = models.ManyToManyField(
         Allergy,
         blank=True,
         verbose_name='Аллергии',
-    )
-    diet_type = models.ForeignKey(
-        DietType,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name='Тип диеты',
     )
     budget_limit = models.DecimalField(
         max_digits=10,
@@ -41,25 +82,14 @@ class UserProfile(models.Model):
         blank=True,
         verbose_name='Ограничение по стоимости',
     )
-    count_of_persons = models.IntegerField(
+    persons_count = models.IntegerField(
         default=1,
         verbose_name='Количество персон',
     )
-    breakfast = models.BooleanField(
-        default=True,
-        verbose_name='Завтрак',
-    )
-    lunch = models.BooleanField(
-        default=True,
-        verbose_name='Обед',
-    )
-    dinner = models.BooleanField(
-        default=True,
-        verbose_name='Ужин',
-    )
-    dessert = models.BooleanField(
-        default=False,
-        verbose_name='Десерт',
+    plan = models.ForeignKey(
+        SubscriptionPlan,
+        on_delete=models.RESTRICT,
+        verbose_name='Тарифный план',
     )
     subscription_end_date = models.DateField(
         null=True,
