@@ -1,5 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -38,7 +39,7 @@
                             Вы получаете рецепты + список продуктов.<br>
                             Больше не нужно думать, что готовить.</h4>
                         <div class="d-block mt-3">
-                            <button class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green">Хочу попробовать</button>
+                            <a href="{% url 'order' %}" button class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green">Хочу попробовать</button></a>
                         </div>
                     </div>
                 </div>
@@ -188,16 +189,16 @@
                 <h1 class="mb-3 text-center"><strong>Истории наших пользователей</strong></h1>
                 <div class="row">
                     <div class="card col-12 col-sm-6 col-lg-3 foodplan__card_borderless">
-                        <img src="img/IMG_1899.jpg" alt="" class="foodplan__story">
+                        <img src="{% static 'img/IMG_1899.jpg' %}" alt="" class="foodplan__story">
                     </div>
                     <div class="card col-12 col-sm-6 col-lg-3 foodplan__card_borderless">
-                        <img src="img/IMG_1900.jpg" alt="" class="foodplan__story">
+                        <img src="{% static 'img/IMG_1900.jpg' %}" alt="" class="foodplan__story">
                     </div>
                     <div class="card col-12 col-sm-6 col-lg-3 foodplan__card_borderless">
-                        <img src="img/IMG_1901.jpg" alt="" class="foodplan__story">
+                        <img src="{% static 'img/IMG_1901.jpg' %}" alt="" class="foodplan__story">
                     </div>
                     <div class="card col-12 col-sm-6 col-lg-3 foodplan__card_borderless">
-                        <img src="img/IMG_1902.jpg" alt="" class="foodplan__story">
+                        <img src="{% static 'img/IMG_1902.jpg' %}" alt="" class="foodplan__story">
                     </div>
                 </div>
             </div>
@@ -207,32 +208,32 @@
                 <div class="row d-flex justify-content-center">
                     <div class="col-12 col-sm-6 col-lg-4">
                         <div class="d-flex flex-row justify-content-between m-1">
-                            <img src="img/union-left.svg" alt="" class="logo1">
+                            <img src="{% static 'img/union-left.svg' %}" alt="" class="logo1">
                             <div class="d-flex flex-column align-items-center text-center justify-content-center">
                                 <h5>Выпускник Сбербанк 500 Startups</h5>
                                 <h5>Moscow</h5>
                             </div>
-                            <img src="img/union-right.svg" alt="" class="logo1">
+                            <img src="{% static 'img/union-right.svg' %}" alt="" class="logo1">
                         </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-4">
                         <div class="d-flex flex-row justify-content-between m-1">
-                            <img src="img/union-left.svg" alt="" class="logo1">
+                            <img src="{% static 'img/union-left.svg' %}" alt="" class="logo1">
                             <div class="d-flex flex-column align-items-center text-center justify-content-center">
                                 <h5>Диплом повара Le Cordon Bleu</h5>
                                 <h5>London</h5>
                             </div>
-                            <img src="img/union-right.svg" alt="" class="logo1">
+                            <img src="{% static 'img/union-right.svg' %}" alt="" class="logo1">
                         </div>
                     </div>
                     <div class="col-12 col-sm-6 col-lg-4">
                         <div class="d-flex flex-row justify-content-between m-1">
-                            <img src="img/union-left.svg" alt="" class="logo1">
+                            <img src="{% static 'img/union-left.svg' %}" alt="" class="logo1">
                             <div class="d-flex flex-column align-items-center text-center justify-content-center">
                                 <h5>При поддержке Austrian Angel Investors</h5>
                                 <h5>Vienna</h5>
                             </div>
-                            <img src="img/union-right.svg" alt="" class="logo1">
+                            <img src="{% static 'img/union-right.svg' %}" alt="" class="logo1">
                         </div>
                     </div>
                 </div>
@@ -242,7 +243,7 @@
     <footer class="footer py-4 mt-5" style="border-top: 1px solid lightgray;">
         <div class="container d-flex flex-row justify-content-between mb-2">
             <a href="https://vk.com/devmanorg">
-                <img src="img/vk.png" height="40" width="auto" alt="">
+                <img src="{% static 'img/vk.png' %}" height="40" width="auto" alt="">
             </a>
             <div>
                 <a href="#" class="link-dark mx-1" style="text-decoration: none;"><b>Виды меню</b></a>
