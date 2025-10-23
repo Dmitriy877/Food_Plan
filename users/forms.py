@@ -13,7 +13,7 @@ class CustomUserCreationForm(UserCreationForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if email and get_user_model().objects.filter(email=email).exists():
-            raise forms.ValidationError('Email already exists.')
+            raise forms.ValidationError('Пользователь с таким email уже существует.')
         return email
 
     def save(self, commit=True):
