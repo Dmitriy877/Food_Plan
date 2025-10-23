@@ -62,42 +62,17 @@
                             </select>
                         </td>
                     </tr>
+                    {% for meal_type in meal_types %}
                     <tr>
-                        <th scope="row" class="text-start">Завтраки</th>
+                        <th scope="row" class="text-start">{{ meal_type.label }}</th>
                         <td>
-                            <select name="breakfast" class="form-select">
+                            <select name="{{ meal_type }}" class="form-select">
                                 <option value="0" selected>&#10004;</option>
                                 <option value="1">&#10008;</option>
                             </select>
                         </td>
                     </tr>
-                    <tr>
-                        <th scope="row" class="text-start">Обеды</th>
-                        <td>
-                            <select name="lunch" class="form-select">
-                                <option value="0" selected>&#10004;</option>
-                                <option value="1">&#10008;</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row" class="text-start">Ужины</th>
-                        <td>
-                            <select name="dinner" class="form-select">
-                                <option value="0" selected>&#10004;</option>
-                                <option value="1">&#10008;</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row" class="text-start">Десерты</th>
-                        <td>
-                            <select name="dessert" class="form-select">
-                                <option value="0" selected>&#10004;</option>
-                                <option value="1">&#10008;</option>
-                            </select>
-                        </td>
-                    </tr>
+                    {% endfor %}
                     <tr>
                         <th scope="row" class="text-start">Кол-во персон</th>
                         <td>
@@ -114,42 +89,15 @@
                     <tr>
                         <th scope="row" class="text-start">Аллергии</th>
                         <td>
+                            {% for allergy in allergies %}
                             <div class="form-check d-flex justify-content-start">
-                                <input class="form-check-input me-1 foodplan_checked-green" type="checkbox" value="" name="allergy1">
-                                <label class="form-check-label" for="allergy1">
-                                    Рыба и морепродукты
+                                <input class="form-check-input me-1 foodplan_checked-green" type="checkbox"
+                                       value="" name="allergy{{ allergy.id }}" id="allergy{{ allergy.id }}">
+                                <label class="form-check-label" for="allergy{{ allergy.id }}">
+                                    {{ allergy }}
                                 </label>
                             </div>
-                            <div class="form-check d-flex justify-content-start">
-                                <input class="form-check-input me-1 foodplan_checked-green" type="checkbox" value="" name="allergy2">
-                                <label class="form-check-label" for="allergy2">
-                                    Мясо
-                                </label>
-                            </div>
-                            <div class="form-check d-flex justify-content-start">
-                                <input class="form-check-input me-1 foodplan_checked-green" type="checkbox" value="" name="allergy3">
-                                <label class="form-check-label" for="allergy3">
-                                    Зерновые
-                                </label>
-                            </div>
-                            <div class="form-check d-flex justify-content-start">
-                                <input class="form-check-input me-1 foodplan_checked-green" type="checkbox" value="" name="allergy3">
-                                <label class="form-check-label" for="allergy3">
-                                    Продукты пчеловодства
-                                </label>
-                            </div>
-                            <div class="form-check d-flex justify-content-start">
-                                <input class="form-check-input me-1 foodplan_checked-green" type="checkbox" value="" name="allergy3">
-                                <label class="form-check-label" for="allergy3">
-                                    Орехи и бобовые
-                                </label>
-                            </div>
-                            <div class="form-check d-flex justify-content-start">
-                                <input class="form-check-input me-1 foodplan_checked-green" type="checkbox" value="" name="allergy3">
-                                <label class="form-check-label" for="allergy3">
-                                    Молочные продукты
-                                </label>
-                            </div>
+                            {% endfor %}
                         </td>
                     </tr>
                 </tbody>
@@ -158,8 +106,8 @@
             </form>
 
             <form class="card d-flex flex-row align-items-baseline mb-5 p-3 foodplan__bg_grey">
-                <label for="exampleInputPassword1" class="form-label me-2">Промокод</label>
-                <input type="password" class="form-control me-2" id="password">
+                <label for="promo" class="form-label me-2">Промокод</label>
+                <input type="text" class="form-control me-2" id="promo">
                 <button type="submit" class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green">Применить</button>
             </form>
             <div class="d-flex justify-content-center my-5">

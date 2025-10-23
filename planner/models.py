@@ -2,11 +2,29 @@ from django.contrib.auth import get_user_model
 from django.db import models
 
 
+class DietTypeChoices(models.TextChoices):
+    CLASSIC = 'classic', 'Классическая'
+    LOW_CARB = 'low_carb', 'Низкоуглеводная'
+    VEGETARIAN = 'vegetarian', 'Вегетарианская'
+    KETO = 'keto', 'Кето'
+
+
+class MealTypeChoices(models.TextChoices):
+    BREAKFAST = 'breakfast', 'Завтраки'
+    LUNCH = 'lunch', 'Обеды'
+    DINNER = 'dinner', 'Ужины'
+    DESSERT = 'dessert', 'Десерты'
+
+
 class Allergy(models.Model):
     name = models.CharField(
         'Аллергия',
         max_length=150,
     )
+
+    class Meta:
+        verbose_name = 'Аллергия'
+        verbose_name_plural = 'Аллергии'
 
     def __str__(self):
         return self.name
@@ -51,23 +69,41 @@ class SubscriptionPlan(models.Model):
         default=0
     )
 
+    class Meta:
+        verbose_name = 'Тарифный план'
+        verbose_name_plural = 'Тарифные планы'
+
+    def __str__(self) -> str:
+        return f"{self.get_duration_display()} "
+
+    def get_price_by_meal_type(self, meal_type: MealTypeChoices):
+        prices = {
+            MealTypeChoices.BREAKFAST: self.breakfast_price,
+            MealTypeChoices.LUNCH: self.lunch_price,
+            MealTypeChoices.DINNER: self.dinner_price,
+            MealTypeChoices.DESSERT: self.dessert_price,
+        }
+        return prices.get(meal_type, 0)
+
+    def total_price(self, selected_meal_types: list[MealTypeChoices]):
+        total = 0
+        for meal_type in selected_meal_types:
+            total += self.get_price_by_meal_type(meal_type)
+        return total
+
 
 class UserProfile(models.Model):
-    class DietTypeChoices(models.TextChoices):
-        CLASSIC = 'classic', 'Классическая'
-        LOW_CARB = 'low_carb', 'Низкоуглеводная'
-        VEGETARIAN = 'vegetarian', 'Вегетарианская'
-        KETO = 'keto', 'Кето'
-
     user = models.OneToOneField(
         get_user_model(),
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
+        related_name='profile',
     )
     diet_type = models.CharField(
         'Тип диеты',
         choices=DietTypeChoices,
-        default=DietTypeChoices.CLASSIC,
+        null=True,
+        blank=True,
         db_index=True,
     )
     allergies = models.ManyToManyField(
@@ -89,6 +125,8 @@ class UserProfile(models.Model):
     plan = models.ForeignKey(
         SubscriptionPlan,
         on_delete=models.RESTRICT,
+        null=True,
+        blank=True,
         verbose_name='Тарифный план',
     )
     subscription_end_date = models.DateField(
@@ -102,6 +140,10 @@ class UserProfile(models.Model):
         null=True,
         blank=True,
     )
+
+    class Meta:
+        verbose_name = 'Профиль пользователя'
+        verbose_name_plural = 'Профили пользователей'
 
     def __str__(self):
         return self.user.username
@@ -152,11 +194,11 @@ class Dish(models.Model):
     description = models.TextField(verbose_name='Описание блюда')
     recipe = models.TextField(verbose_name='Рецепт приготовления', blank=True, default='')
     photo = models.ImageField(verbose_name='Фото блюда', blank=True, null=True, upload_to='dishes/')
-    diet_type = models.ForeignKey(
-        DietType,
-        on_delete=models.SET_NULL,
+    diet_type = models.CharField(
+        'Тип меню',
+        choices=DietTypeChoices,
         null=True,
-        verbose_name='Тип меню',
+        blank=True,
     )
     ingredients = models.ManyToManyField(
         Ingredient,

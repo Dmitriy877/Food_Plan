@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.views.generic import TemplateView
 
-from planner.models import MealType
+from planner.models import Allergy, MealTypeChoices
 
 
 def index(request):
@@ -21,10 +21,14 @@ def card(request):
 def lk(request):
     return render(request, 'lk.html')
 
+
 class SubscriptionView(TemplateView):
     template_name = 'order.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['meal_types'] = MealType.objects.all()
+        context['meal_types'] = MealTypeChoices
+        context['allergies'] = Allergy.objects.all()
+
+        return context
