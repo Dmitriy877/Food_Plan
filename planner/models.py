@@ -1,5 +1,5 @@
+from django.contrib.auth import get_user_model
 from django.db import models
-from django.contrib.auth.models import User
 
 
 class Allergy(models.Model):
@@ -18,7 +18,8 @@ class DietType(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(
-        User, on_delete=models.CASCADE,
+        get_user_model(),
+        on_delete=models.CASCADE,
         verbose_name='Пользователь'
     )
     allergies = models.ManyToManyField(

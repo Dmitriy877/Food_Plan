@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 {% load static %}
 <html lang="en">
@@ -28,7 +29,7 @@
                         
                         <li class="nav-item align-items-center d-md-flex flex-grow-1 justify-content-end">
                             <button class="btn shadow-none btn-outline-success me-2 foodplan_green foodplan__border_green">Подписка</button>
-                            <button class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green">Войти</button>
+                            <a href="{% url 'login' %}" class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green">Войти</a>
                         </li>
                     </ul>
                 </div>
@@ -49,30 +50,80 @@
                     <h2 class="text-center"><strong>Авторизация</strong></h2>
                 </div>
                 <div class="card px-5 py-3 d-flex align-items-center foodplan__shadow">
-                    <form>
+                    <form method="POST" action="">
+                        {% csrf_token %}
                         <h1 class="mb-4 text-center"><strong>Регистрация</strong></h1>
+
+                        <!-- Общие ошибки формы -->
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
                         <div class="mb-3">
-                            <label for="exampleInputEmail1" class="form-label">Имя</label>
-                            <input type="text" class="form-control" id="name">
+                            <label for="username" class="form-label">Имя</label>
+                            <input type="text" class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+                                   id="username" name="username"
+                                   value="{% if form.username.value %}{{ form.username.value }}{% endif %}" required>
+                            <!-- Ошибки для поля username -->
+                            {% if form.username.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.username.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
                         <div class="mb-3">
-                            <label for="exampleInputEmail1" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" aria-describedby="emailHelp">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+                                   id="email" name="email"
+                                   value="{% if form.email.value %}{{ form.email.value }}{% endif %}"
+                                   aria-describedby="emailHelp" required>
+                            <!-- Ошибки для поля email -->
+                            {% if form.email.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.email.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
                         <div class="mb-3">
-                            <label for="exampleInputPassword1" class="form-label">Пароль</label>
-                            <input type="password" class="form-control" id="password">
+                            <label for="password1" class="form-label">Пароль</label>
+                            <input type="password" class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+                                   id="password1" name="password1" required>
+                            <!-- Ошибки для поля password1 -->
+                            {% if form.password1.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.password1.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
                         <div class="mb-3">
-                            <label for="exampleInputPassword1" class="form-label">Подтверждение пароля</label>
-                            <input type="password" class="form-control" id="PasswordConfirm">
+                            <label for="password2" class="form-label">Подтверждение пароля</label>
+                            <input type="password" class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+                                   id="password2" name="password2" required>
+                            <!-- Ошибки для поля password2 -->
+                            {% if form.password2.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.password2.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
                         <div class="row mb-3">
                             <div class="col-12 col-sm-6 mt-3">
                                 <button type="submit" class="btn  shadow-nonew-100 btn-outline-success foodplan_green foodplan__border_green">Регистрация</button>
                             </div>
                             <div class="col-12 col-sm-6 mt-3 d-flex justify-content-center align-items-center">
-                                <small>Уже есть аккаунт? <a href="#" class="link-dark foodplan_green">Войти</a></small>
+                                <small>Уже есть аккаунт? <a href="{% url 'login' %}" class="link-dark foodplan_green">Войти</a></small>
                             </div>
                         </div>
                     </form>
