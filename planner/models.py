@@ -2,18 +2,94 @@ from django.contrib.auth import get_user_model
 from django.db import models
 
 
+class DietTypeChoices(models.TextChoices):
+    CLASSIC = 'classic', 'Классическая'
+    LOW_CARB = 'low_carb', 'Низкоуглеводная'
+    VEGETARIAN = 'vegetarian', 'Вегетарианская'
+    KETO = 'keto', 'Кето'
+
+
+class MealTypeChoices(models.TextChoices):
+    BREAKFAST = 'breakfast', 'Завтраки'
+    LUNCH = 'lunch', 'Обеды'
+    DINNER = 'dinner', 'Ужины'
+    DESSERT = 'dessert', 'Десерты'
+
+
 class Allergy(models.Model):
-    name = models.CharField(max_length=150, verbose_name='Аллергия')
+    name = models.CharField(
+        'Аллергия',
+        max_length=150,
+    )
+
+    class Meta:
+        verbose_name = 'Аллергия'
+        verbose_name_plural = 'Аллергии'
 
     def __str__(self):
         return self.name
 
 
-class DietType(models.Model):
-    name = models.CharField(max_length=150, verbose_name='Тип диеты')
+class SubscriptionPlan(models.Model):
+    DURATION_CHOICES = (
+        (1, '1 месяц'),
+        (3, '3 месяца'),
+        (6, '6 месяцев'),
+        (12, '12 месяцев'),
+    )
+    duration = models.IntegerField(
+        'Срок подписки',
+        choices=DURATION_CHOICES,
+        default=1,
+        unique=True,
+        db_index=True,
+    )
+    breakfast_price = models.DecimalField(
+        'Цена подписки на завтраки',
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    lunch_price = models.DecimalField(
+        'Цена подписки на обеды',
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    dinner_price = models.DecimalField(
+        'Цена подписки на ужины',
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    dessert_price = models.DecimalField(
+        'Цена подписки на десерты',
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
 
-    def __str__(self):
-        return self.name
+    class Meta:
+        verbose_name = 'Тарифный план'
+        verbose_name_plural = 'Тарифные планы'
+
+    def __str__(self) -> str:
+        return f"{self.get_duration_display()} "
+
+    def get_price_by_meal_type(self, meal_type: MealTypeChoices):
+        prices = {
+            MealTypeChoices.BREAKFAST: self.breakfast_price,
+            MealTypeChoices.LUNCH: self.lunch_price,
+            MealTypeChoices.DINNER: self.dinner_price,
+            MealTypeChoices.DESSERT: self.dessert_price,
+        }
+        return prices.get(meal_type, 0)
+
+    def total_price(self, selected_meal_types: list[MealTypeChoices]):
+        total = 0
+        for meal_type in selected_meal_types:
+            total += self.get_price_by_meal_type(meal_type)
+        return total
 
 
 class UserProfile(models.Model):
@@ -21,18 +97,19 @@ class UserProfile(models.Model):
         get_user_model(),
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
+        related_name='profile',
+    )
+    diet_type = models.CharField(
+        'Тип диеты',
+        choices=DietTypeChoices,
+        null=True,
+        blank=True,
+        db_index=True,
     )
     allergies = models.ManyToManyField(
         Allergy,
         blank=True,
         verbose_name='Аллергии',
-    )
-    diet_type = models.ForeignKey(
-        DietType,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name='Тип диеты',
     )
     budget_limit = models.DecimalField(
         max_digits=10,
@@ -41,25 +118,16 @@ class UserProfile(models.Model):
         blank=True,
         verbose_name='Ограничение по стоимости',
     )
-    count_of_persons = models.IntegerField(
+    persons_count = models.IntegerField(
         default=1,
         verbose_name='Количество персон',
     )
-    breakfast = models.BooleanField(
-        default=True,
-        verbose_name='Завтрак',
-    )
-    lunch = models.BooleanField(
-        default=True,
-        verbose_name='Обед',
-    )
-    dinner = models.BooleanField(
-        default=True,
-        verbose_name='Ужин',
-    )
-    dessert = models.BooleanField(
-        default=False,
-        verbose_name='Десерт',
+    plan = models.ForeignKey(
+        SubscriptionPlan,
+        on_delete=models.RESTRICT,
+        null=True,
+        blank=True,
+        verbose_name='Тарифный план',
     )
     subscription_end_date = models.DateField(
         null=True,
@@ -72,6 +140,10 @@ class UserProfile(models.Model):
         null=True,
         blank=True,
     )
+
+    class Meta:
+        verbose_name = 'Профиль пользователя'
+        verbose_name_plural = 'Профили пользователей'
 
     def __str__(self):
         return self.user.username
@@ -122,11 +194,11 @@ class Dish(models.Model):
     description = models.TextField(verbose_name='Описание блюда')
     recipe = models.TextField(verbose_name='Рецепт приготовления', blank=True, default='')
     photo = models.ImageField(verbose_name='Фото блюда', blank=True, null=True, upload_to='dishes/')
-    diet_type = models.ForeignKey(
-        DietType,
-        on_delete=models.SET_NULL,
+    diet_type = models.CharField(
+        'Тип меню',
+        choices=DietTypeChoices,
         null=True,
-        verbose_name='Тип меню',
+        blank=True,
     )
     ingredients = models.ManyToManyField(
         Ingredient,

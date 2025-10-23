@@ -23,7 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),
     path('', views.index, name='index'),
-    path('order/', views.order, name='order'),
+    path('order/', views.SubscriptionView.as_view(), name='order'),
     path('lk/', views.lk, name='lk'),
     path('card/', views.card, name='card'),
 ]
