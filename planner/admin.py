@@ -10,9 +10,9 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(UserSubscription)
 class UserSubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('user', 'plan', 'end_date')
+    list_display = ('user', 'plan', 'start_date', 'end_date')
     list_filter = ('plan',)
-    ordering = ('end_data',)
+    ordering = ('end_date',)
 
 
 @admin.register(SubscriptionPlan)
