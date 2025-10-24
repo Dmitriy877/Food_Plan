@@ -5,6 +5,18 @@
 <main style="margin-top: calc(2rem + 85px);">
     <section>
         <div class="container">
+            {% if messages %}
+            <div class="row">
+                <div class="col-12">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
             <div class="row">
                 <div class="card col-12 p-3 mb-5 foodplan__shadow">
                     <h4 class="foodplan__backButton">
@@ -15,15 +27,18 @@
 
                 <div class="card col-12 col-md-2 p-3 mb-3 d-flex flex-column align-items-center foodplan__shadow">
                     <div class="position-relative">
-                        <img src="img/test_avatar.png" alt="" width="100" height="100" class="rounded-pill">
-                        <span class="badge rounded-circle position-absolute bottom-0 end-0 foodplan__bg_green avatar__plus"><a href="#"
-                                class="link-dark text-decoration-none align-middle">+</a></span>
+                        <img src="{% static 'img/test_avatar.png' %}" alt="" width="100" height="100" class="rounded-pill">
+                        <span class="badge rounded-circle position-absolute bottom-0 end-0 foodplan__bg_green avatar__plus">
+                            <a href="#" class="link-dark text-decoration-none align-middle">+</a>
+                        </span>
                     </div>
                     <h3 class="card-title text-center">{{ user.username }}</h3>
                     <div class="d-block">
                         <form method="POST" action="{% url 'logout' %}">
                             {% csrf_token %}
-                            <button class="btn btn-outline-success shadow-none foodplan_green foodplan__border_green">Выйти</button>
+                            <button class="btn btn-outline-success shadow-none foodplan_green foodplan__border_green">
+                                Выйти
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -31,23 +46,34 @@
                 <div class="card col-12 col-md-10 p-3 mb-3 foodplan__shadow">
                         <ul class="nav nav-tabs">
                             <li class="nav-item foodplan__tab-item">
-                                <button id="tab1" class="btn shadow-none foodplan__tab-button active" data-bs-toggle="tab" data-bs-target="#data">Персональные данные</button>
+                                <button id="tab1" class="btn shadow-none foodplan__tab-button active" data-bs-toggle="tab" data-bs-target="#data">
+                                    Персональные данные
+                                </button>
                             </li>
                             <li class="nav-item foodplan__tab-item">
-                                <button id="tab2" class="btn shadow-none foodplan__tab-button" data-bs-toggle="tab" data-bs-target="#menu">Моё меню</button>
+                                <button id="tab2" class="btn shadow-none foodplan__tab-button" data-bs-toggle="tab" data-bs-target="#menu">
+                                    Моё меню
+                                </button>
                             </li>
                             <li class="nav-item foodplan__tab-item flex-grow-1"></li>
                         </ul>
                         <div class="tab-content mt-2">
                             <div class="tab-pane fade show active" id="data">
-                                <form action="">
+                                <form method="POST" action="">
+                                    {% csrf_token %}
                                     <div class="mb-3">
                                         <div class="d-flex align-items-center justify-content-between">
-                                            <label for="username" class="form-label">Имя</label>
-                                            <small><a href="#" class="link-dark foodplan_green">изменить</a></small>
+                                            <label for="id_username" class="form-label">Имя</label>
+                                            <small><a href="#" id="change-username" class="link-dark foodplan_green">изменить</a></small>
                                         </div>
-
-                                        <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}">
+                                        {{ form.username }}
+                                        {% if form.username.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.username.errors %}
+                                            <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
                                     </div>
                                     <div class="mb-3">
                                         <label for="email" class="form-label">Email</label>
@@ -55,26 +81,41 @@
                                     </div>
                                     <div class="mb-3">
                                         <div class="d-flex align-items-center justify-content-between">
-                                            <label for="password1" class="form-label">Пароль</label>
-                                            <small><a href="#" class="link-dark foodplan_green">изменить</a></small>
+                                            <label for="id_new_password1" class="form-label">Пароль</label>
+                                            <small><a href="#" id="change-password" class="link-dark foodplan_green">изменить</a></small>
                                         </div>
-
-                                        <input type="password" class="form-control" id="password1" name="password1">
+                                        {{ form.new_password1 }}
+                                        {% if form.new_password1.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.new_password1.errors %}
+                                            <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
                                     </div>
                                     <div class="mb-3">
-                                        <label for="password2" class="form-label">Подтверждение пароля</label>
-                                        <input type="password" class="form-control" id="password2" name="password2">
-                                    </div>
+                                        <label for="id_new_password2" class="form-label">Подтверждение пароля</label>
+                                        {{ form.new_password2 }}
+                                        {% if form.new_password2.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.new_password2.errors %}
+                                            <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                        </div>
                                     <div class="d-block">
-                                        <button type="submit" class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green">Сохранить
-                                            изменения</button>
+                                        <button type="submit" class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green">
+                                            Сохранить изменения
+                                        </button>
                                     </div>
                                 </form>
                             </div>
+
                             <div class="tab-pane fade" id="menu">
                                 <div class="row">
                                     <div class="col-2">
-                                        <img src="img/circle1.png" alt="" class="w-100">
+                                        <img src="{% static 'img/circle1.png' %}" alt="" class="w-100">
                                     </div>
                                     <div class="col-10 col-md-10">
                                         <div class="row">
@@ -87,7 +128,8 @@
                                                     distinctio cum laboriosam sed. Lorem ipsum dolor sit, amet consectetur adipisicing elit. Eius saepe ea nobis
                                                     necessitatibus consectetur rem! Eligendi
                                                     assumenda facere sint quibusdam dolorem quasi doloribus nemo, temporibus molestiae distinctio cum laboriosam
-                                                    sed.</h6>
+                                                    sed.
+                                                </h6>
                                             </div>
                                             <div class="col-md-12 col-lg-3 text-muted d-flex flex-column justify-content-between">
                                                 <div class="d-flex flex-row justify-content-between">
@@ -116,4 +158,29 @@
     </section>
 </main>
 {% include 'partials/footer.html' %}
+{% endblock %}
+{% block js_extra %}
+<script>
+document.getElementById('change-username').addEventListener('click', function(e) {
+    e.preventDefault();
+    const usernameField = document.getElementById('id_username');
+    usernameField.readOnly = !usernameField.readOnly;
+
+    if (!usernameField.readOnly) {
+        usernameField.focus();
+    }
+});
+
+document.getElementById('change-password').addEventListener('click', function(e) {
+    e.preventDefault();
+    const passwordField1 = document.getElementById('id_new_password1');
+    const passwordField2 = document.getElementById('id_new_password2');
+    passwordField1.readOnly = !passwordField1.readOnly;
+    passwordField2.readOnly = !passwordField2.readOnly;
+
+    if (!passwordField1.readOnly) {
+        passwordField1.focus();
+    }
+});
+</script>
 {% endblock %}

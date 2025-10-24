@@ -26,6 +26,6 @@ urlpatterns = [
     path('', render, kwargs={'template_name': 'index.html'}, name='index'),
     path('order/', views.OrderView.as_view(), name='order'),
     path('order/calculate/', views.CalculateSubscription.as_view(), name='order_calculate'),
-    path('lk/', views.lk, name='lk'),
+    path('profile/', views.ProfileView.as_view(), name='profile'),
     path('card/', views.card, name='card'),
 ]
