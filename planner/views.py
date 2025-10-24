@@ -2,16 +2,16 @@ import json
 from typing import Any
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import render
-from django.urls import reverse
+from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import FormView
 
-from planner.forms import SubscriptionForm
+from planner.forms import SubscriptionForm, UserProfileForm
 from planner.models import MealTypeChoices, SubscriptionPlan
 
 
@@ -19,14 +19,10 @@ def card(request):
     return render(request, 'card1.html')
 
 
-@login_required
-def lk(request):
-    return render(request, 'lk.html')
-
-
 class OrderView(LoginRequiredMixin, FormView):
     template_name = 'order.html'
     form_class = SubscriptionForm
+    success_url = reverse_lazy('profile')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -38,8 +34,6 @@ class OrderView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         # TODO: валидацию на наличие оплаченной подписки, оплату и создание подписки
-        raise ValidationError('Ошибка валидации')
-        self.success_url = reverse('lk')
         messages.success(self.request, 'Подписка успешно создана!')
         return super().form_valid(form)
 
@@ -74,3 +68,35 @@ class CalculateSubscription(View):
             return JsonResponse({'error': str(error)}, status=400)
         except Exception:
             return JsonResponse({'error': 'unexpected server error'}, status=500)
+
+
+class ProfileView(LoginRequiredMixin, FormView):
+    template_name = 'profile.html'
+    form_class = UserProfileForm
+    success_url = reverse_lazy('profile')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        try:
+            original_username = self.request.user.username
+            form.save()
+            is_password_changed = bool(form.cleaned_data.get('new_password1'))
+            is_username_changed = form.cleaned_data.get('username') != original_username
+            if is_password_changed:
+                update_session_auth_hash(self.request, self.request.user)
+                messages.success(self.request, 'Пароль успешно изменён.')
+            if is_username_changed:
+                messages.success(self.request, 'Имя пользователя успешно изменено.')
+
+            return super().form_valid(form)
+        except Exception as exc:
+            messages.error(self.request, f'Ошибка сохранения: {str(exc)}', extra_tags='danger')
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Исправьте ошибки в форме.', extra_tags='danger')
+        return super().form_invalid(form)

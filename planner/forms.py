@@ -1,4 +1,7 @@
 from django import forms
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 
 from planner.models import Allergy, DietTypeChoices, MealTypeChoices, SubscriptionPlan
@@ -51,3 +54,65 @@ class SubscriptionForm(forms.Form):
         }),
         required=False,
     )
+
+
+class UserProfileForm(forms.Form):
+    username = forms.CharField(
+        max_length=50,
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'readonly': True},
+        ),
+        required=False,
+    )
+    new_password1 = forms.CharField(
+        max_length=100,
+        widget=forms.PasswordInput(
+            attrs={'class': 'form-control', 'readonly': True},
+        ),
+        required=False,
+    )
+    new_password2 = forms.CharField(
+        max_length=100,
+        widget=forms.PasswordInput(
+            attrs={'class': 'form-control', 'readonly': True},
+        ),
+        required=False,
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+        self.fields['username'].initial = self.user.username
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if username and username != self.user.username:
+            if get_user_model().objects.filter(username=username).exclude(pk=self.user.pk).exists():
+                raise ValidationError('Пользователь с таким именем уже существует.')
+        return username
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('new_password1')
+        password2 = cleaned_data.get('new_password2')
+        if password1 or password2:
+            if password1 != password2:
+                raise ValidationError({'new_password2': 'Пароли не совпадают.'})
+            try:
+                validate_password(password2, self.user)
+            except ValidationError as error:
+                raise ValidationError({'new_password1': error.messages})
+
+        return cleaned_data
+
+    def save(self):
+        username = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('new_password1')
+        if username and username != self.user.username:
+            self.user.username = username
+            self.user.save()
+        if password:
+            self.user.set_password(password)
+            self.user.save()
+
+        return self.user
