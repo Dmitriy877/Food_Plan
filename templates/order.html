@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load form_tags %}
 {% block content %}
 <header>
     <nav class="navbar navbar-expand-md navbar-light fixed-top navbar__opacity">
@@ -7,7 +8,7 @@
             <a class="navbar-brand" href="{% url 'index' %}">
                 <img src="{% static 'img/logo.8d8f24edbb5f.svg' %}" height="55" width="189" alt="">
             </a>
-            <h3 class="text-secondary mt-2 me-2">Стоимость: 00000₽</h3>
+            <h3 class="text-secondary mt-2 me-2">Стоимость: <span id="total-price">{{ total_price }}</span>₽</h3>
             <button form="order" type="submit" class="btn shadow-none btn-sm btn-outline-success foodplan_green foodplan__border_green">Оплатить</button>
         </div>
     </nav>
@@ -16,85 +17,67 @@
     <section>
         <div class="container">
             <h1><strong class="foodplan_green">1 шаг </strong>до первого меню</h1>
-            <h5 class="text-secondary mb-3">Вам будет доступно 4 типа меню: Классическое, Низкоуглеводное, Вегетарианское и Кето.</h5>
+            <h5 class="text-secondary mb-3">
+                Вам будет доступно 4 типа меню: Классическое, Низкоуглеводное, Вегетарианское и Кето.
+            </h5>
+
             <div class="row mb-5">
+                {% for choice in form.foodtype %}
+                {% with 'img/menu_'|add:choice.data.value|add:'.png' as image_path %}
                 <div class="col-6 col-md-3">
-                    <label for="classic" class="position-relative" style="cursor: pointer;">
-                        <img src="{% static 'img/menu_classical.png' %}" alt="" class="w-100">
-                        <input form="order" type="radio" name="foodtype" id="classic" value="classic" class="foodplan_selected d-none">
-                        <div class="img_selected" id="img1"></div>
+                    <label for="{{ choice.id_for_label }}" class="position-relative" style="cursor: pointer;">
+                        <img src="{% static image_path %}" alt="" class="w-100">
+                        {{ choice.tag }}
+                        <div class="img_selected" id="img{{ forloop.counter }}"></div>
                     </label>
                 </div>
-                <div class="col-6 col-md-3">
-                    <label for="low" class="position-relative" style="cursor: pointer;">
-                        <img src="{% static 'img/menu_nizkougl.png' %}" alt="" class="w-100">
-                        <input form="order" type="radio" name="foodtype" id="low" value="low" class="foodplan_selected d-none">
-                        <div class="img_selected" id="img2"></div>
-                    </label>
-                </div>
-                <div class="col-6 col-md-3">
-                    <label for="veg" class="position-relative" style="cursor: pointer;">
-                        <img src="{% static 'img/menu_veg.png' %}" alt="" class="w-100">
-                        <input form="order" type="radio" name="foodtype" id="veg" value="veg" class="foodplan_selected d-none">
-                        <div class="img_selected" id="img3"></div>
-                    </label>
-                </div>
-                <div class="col-6 col-md-3">
-                    <label for="keto" class="position-relative" style="cursor: pointer;">
-                        <img src="{% static 'img/menu_keto.png' %}" alt="" class="w-100">
-                        <input form="order" type="radio" name="foodtype" id="keto" value="keto" class="foodplan_selected d-none">
-                        <div class="img_selected" id="img4"></div>
-                    </label>
-                </div>
+                {% endwith %}
+                {% endfor %}
             </div>
+
             <h2><strong>Выберите подходящий тариф</strong></h2>
-            <form id="order">
+            <form method="POST" id="order">
+            {% csrf_token %}
             <table class="table text-center text-truncate mb-5">
                 <tbody>
                     <tr>
                         <th scope="row" class="text-start">Срок</th>
                         <td>
-                            <select class="form-select" name="term">
-                                <option value="0" selected>1 мес.</option>
-                                <option value="1">3 мес.</option>
-                                <option value="2">6 мес.</option>
-                                <option value="3">12 мес.</option>
+                            <select class="form-select" name="{{ form.term.name }}" id="term-select">
+                                {% for value, label in form.term.field.choices %}
+                                <option value="{{ value }}" {% if value == form.term.initial %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
                             </select>
                         </td>
                     </tr>
                     {% for meal_type in meal_types %}
                     <tr>
                         <th scope="row" class="text-start">{{ meal_type.label }}</th>
-                        <td>
-                            <select name="{{ meal_type }}" class="form-select">
-                                <option value="0" selected>&#10004;</option>
-                                <option value="1">&#10008;</option>
-                            </select>
-                        </td>
+                        <td>{{ form|get_field:meal_type.value }}</td>
                     </tr>
                     {% endfor %}
                     <tr>
                         <th scope="row" class="text-start">Кол-во персон</th>
                         <td>
-                            <select name="persons" class="form-select">
-                                <option value="0" selected>1</option>
-                                <option value="1">2</option>
-                                <option value="2">3</option>
-                                <option value="3">4</option>
-                                <option value="4">5</option>
-                                <option value="5">6</option>
+                            <select name="{{ form.persons.name }}" class="form-select">
+                                {% for value, label in form.persons.field.choices %}
+                                <option value="{{ value }}" {% if value == form.persons.initial %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
                             </select>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row" class="text-start">Аллергии</th>
                         <td>
-                            {% for allergy in allergies %}
+                            {% for checkbox in form.allergies %}
                             <div class="form-check d-flex justify-content-start">
-                                <input class="form-check-input me-1 foodplan_checked-green" type="checkbox"
-                                       value="" name="allergy{{ allergy.id }}" id="allergy{{ allergy.id }}">
-                                <label class="form-check-label" for="allergy{{ allergy.id }}">
-                                    {{ allergy }}
+                                {{ checkbox.tag }}
+                                <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                    {{ checkbox.choice_label }}
                                 </label>
                             </div>
                             {% endfor %}
@@ -116,4 +99,80 @@
         </div>
     </section>
 </main>
+{% endblock %}
+{% block js_extra %}
+<script>
+
+function getSelectedMeals() {
+    const selectedMeals = {
+        breakfast: document.querySelector('select[name="breakfast"]'),
+        lunch: document.querySelector('select[name="lunch"]'),
+        dinner: document.querySelector('select[name="dinner"]'),
+        dessert: document.querySelector('select[name="dessert"]')
+    };
+    return selectedMeals;
+}
+
+function validateMealTypes() {
+    const mealSelects = Object.values(getSelectedMeals());
+    const atLeastOneSelected = mealSelects.some(select => select.value === 'True');
+    mealSelects.forEach(select => {
+        if (atLeastOneSelected) {
+            select.classList.remove('is-invalid');
+            select.title = '';
+        } else {
+            select.classList.add('is-invalid');
+            select.title = 'Выберите хотя бы один приём пищи';
+        }
+    });
+    const payButtons = document.querySelectorAll('button[form="order"]');
+    payButtons.forEach(payButton => {
+        payButton.disabled = !atLeastOneSelected;
+    });
+    if (!atLeastOneSelected) {
+        return false;
+    }
+    return true;
+}
+
+function calculatePrice() {
+    const mealSelectors = getSelectedMeals();
+    const selectedMeals = {};
+    for (const key in mealSelectors) {
+        selectedMeals[key] = mealSelectors[key].value
+    };
+    const formData = {
+        term: document.querySelector('#term-select').value,
+        persons: document.querySelector('select[name="persons"]').value,
+        ...selectedMeals
+    };
+    fetch('{% url "order_calculate" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('total-price').textContent = data.totalPrice;
+    });
+    validateMealTypes();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('select.form-select').forEach(select => {
+        select.addEventListener('change', calculatePrice);
+    });
+
+    document.getElementById('order').addEventListener('submit', function(event) {
+        if (!validateMealTypes()) {
+            event.preventDefault();
+        }
+    });
+    validateMealTypes();
+});
+
+</script>
 {% endblock %}
