@@ -83,7 +83,7 @@ DATABASES = {
 
 # AUTH
 AUTH_USER_MODEL = 'users.CustomUser'
-LOGIN_REDIRECT_URL = '/lk/'
+LOGIN_REDIRECT_URL = '/profile/'
 LOGIN_URL = '/users/login/'
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
