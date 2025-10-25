@@ -262,7 +262,7 @@ class Dish(models.Model):
     )
     diet_type = models.CharField(
         'Тип меню',
-        choices=DietTypeChoices,
+        choices=DietTypeChoices.choices,
         null=True,
         blank=True,
         db_index=True,

@@ -14,7 +14,7 @@ urlpatterns = [
     path('order/', views.OrderView.as_view(), name='order'),
     path('order/calculate/', views.CalculateSubscription.as_view(), name='order_calculate'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
-    path('profile/upload-avatar', views.UploadAvatarView.as_view(), name='upload_avatar'),
+    path('profile/upload-avatar/', views.UploadAvatarView.as_view(), name='upload_avatar'),
     path('card/', views.card, name='card'),
 ]
 
