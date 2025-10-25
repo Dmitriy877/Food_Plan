@@ -163,7 +163,7 @@
         })
             .then(response => response.json())
             .then(data => {
-            document.getElementById('total-price').textContent = data.totalPrice;
+            document.getElementById('total-price').textContent = data.totalPrice.toString().replace('.', ',');
         });
         validateMealTypes();
     }
