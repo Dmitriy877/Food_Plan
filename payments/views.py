@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.views import View
 from yookassa import Configuration, Payment
 
+from payments.models import PaymentProviderChoices, SubscriptionPayment
 from planner.views import create_subscription
 
 
@@ -47,7 +48,7 @@ class YookassaPaymentView(LoginRequiredMixin, View):
         return redirect(payment.confirmation.confirmation_url)
 
 
-class YookassaSuccessView(LoginRequiredMixin, View):
+class YookassaSuccessView(View):
     def get(self, request):
         payment_id = request.session.get('yookassa_payment_id')
         subscription_data = request.session.get('pending_subscription')
@@ -57,9 +58,25 @@ class YookassaSuccessView(LoginRequiredMixin, View):
             return redirect('order')
 
         try:
-            create_subscription(request.user, subscription_data)
+            # Здесь проверка платежа в демо не работает
+            # payment = Payment.find_one(payment_id)
+            # if payment.status != 'succeeded':
+            #     messages.error(request, f'Платёж не прошёл: {payment.status}', extra_tags='danger')
+            #     return redirect('order')
+            subscription = create_subscription(request.user, subscription_data)
+            SubscriptionPayment.objects.create(
+                payment_id=payment_id,
+                user=request.user,
+                subscription=subscription,
+                provider=PaymentProviderChoices.YOOKASSA,
+                amount=subscription.total_price,
+                description=subscription_data['description'],
+            )
             del request.session['yookassa_payment_id']
             del request.session['pending_subscription']
+
+            messages.success(request, '✅ Оплата прошла успешно! Подписка активирована.')
+            return redirect('profile')
         except Exception as exc:
-            messages.error(request, f'Ошибка создания подписки: {str(exc)}')
+            messages.error(request, f'Ошибка создания подписки: {str(exc)}', extra_tags='danger')
             return redirect('order')

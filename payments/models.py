@@ -4,11 +4,16 @@ from django.db import models
 from planner.models import UserSubscription
 
 
-class ProviderChoices(models.TextChoices):
+class PaymentProviderChoices(models.TextChoices):
     YOOKASSA = 'yookassa', 'ЮKassa'
 
 
 class SubscriptionPayment(models.Model):
+    payment_id = models.CharField(
+        'Идентификатор платежа',
+        max_length=128,
+        unique=True,
+    )
     user = models.ForeignKey(
         get_user_model(),
         on_delete=models.RESTRICT,
@@ -21,7 +26,7 @@ class SubscriptionPayment(models.Model):
     provider = models.CharField(
         'Платежный провайдер',
         max_length=16,
-        choices=ProviderChoices.choices,
+        choices=PaymentProviderChoices.choices,
         db_index=True,
     )
     amount = models.DecimalField(
@@ -43,4 +48,4 @@ class SubscriptionPayment(models.Model):
         verbose_name_plural = 'Платежи за подписку'
 
     def __str__(self):
-        return f"{self.user.username}: {self.description}"
+        return f"{self.payment_id}"
