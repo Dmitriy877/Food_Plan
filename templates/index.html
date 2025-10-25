@@ -20,18 +20,7 @@
     </nav>
 </header>
 <main style="margin-top: calc(2rem + 85px);">
-    {% if messages %}
-    <div class="row">
-        <div class="col-12">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
+    {% include 'partials/messages.html' %}
     <section class="foodplan__head_bg">
         <div class="container">
             <div class="d-flex w-50 py-lg-5 foodplan__head">

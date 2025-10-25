@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -149,6 +151,12 @@ class UserSubscription(models.Model):
         return self.plan.total_price(self.selected_meal_types) * self.persons_count
 
 
+def get_avatar_upload_path(instance, filename: str) -> str:
+    extension = filename.rsplit('.', 1)[-1].lower()
+    unique_name = f'{uuid.uuid4().hex}.{extension}'
+    return f'avatars/{unique_name}'
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(
         get_user_model(),
@@ -165,7 +173,7 @@ class UserProfile(models.Model):
     )
     avatar = models.ImageField(
         'Аватар',
-        upload_to='avatars/',
+        upload_to=get_avatar_upload_path,
         null=True,
         blank=True,
     )

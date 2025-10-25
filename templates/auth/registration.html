@@ -5,6 +5,7 @@
 <main style="margin-top: calc(2rem + 85px);">
     <section>
         <div class="container">
+            {% include 'partials/messages.html' %}
             <div class="card p-3 mb-5 foodplan__shadow">
                 <a href="#" class="link-secondary fw-light foodplan__backButton">
                     <svg xmlns="http://www.w3.org/2000/svg" width="9%" height="9%" fill="currentColor" class="bi bi-arrow-left-circle"
@@ -20,7 +21,6 @@
                     {% csrf_token %}
                     <h1 class="mb-4 text-center"><strong>Регистрация</strong></h1>
 
-                    <!-- Общие ошибки формы -->
                     {% if form.non_field_errors %}
                     <div class="alert alert-danger">
                         {% for error in form.non_field_errors %}
@@ -33,8 +33,7 @@
                         <label for="username" class="form-label">Имя</label>
                         <input type="text" class="form-control {% if form.username.errors %}is-invalid{% endif %}"
                                id="username" name="username"
-                               value="{% if form.username.value %}{{ form.username.value }}{% endif %}" required>
-                        <!-- Ошибки для поля username -->
+                               value="{% if form.username.value %}{{ form.username.value }}{% endif %}" required autofocus>
                         {% if form.username.errors %}
                         <div class="invalid-feedback">
                             {% for error in form.username.errors %}
@@ -49,7 +48,6 @@
                                id="email" name="email"
                                value="{% if form.email.value %}{{ form.email.value }}{% endif %}"
                                aria-describedby="emailHelp" required>
-                        <!-- Ошибки для поля email -->
                         {% if form.email.errors %}
                         <div class="invalid-feedback">
                             {% for error in form.email.errors %}
@@ -62,7 +60,6 @@
                         <label for="password1" class="form-label">Пароль</label>
                         <input type="password" class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
                                id="password1" name="password1" required>
-                        <!-- Ошибки для поля password1 -->
                         {% if form.password1.errors %}
                         <div class="invalid-feedback">
                             {% for error in form.password1.errors %}
@@ -75,7 +72,6 @@
                         <label for="password2" class="form-label">Подтверждение пароля</label>
                         <input type="password" class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
                                id="password2" name="password2" required>
-                        <!-- Ошибки для поля password2 -->
                         {% if form.password2.errors %}
                         <div class="invalid-feedback">
                             {% for error in form.password2.errors %}

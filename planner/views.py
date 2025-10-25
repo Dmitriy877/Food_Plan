@@ -1,25 +1,46 @@
 import json
 from typing import Any
 
+from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import FormView
 
 from planner.forms import SubscriptionForm, UserProfileForm
-from planner.models import MealTypeChoices, SubscriptionPlan
+from planner.models import MealTypeChoices, SubscriptionPlan, UserProfile, UserSubscription
 
 
 def card(request):
     return render(request, 'card1.html')
 
 
-class OrderView(LoginRequiredMixin, FormView):
+def _validate_subscription_data(subs_data: dict[str, Any]) -> tuple[int, int, list]:
+    try:
+        term = int(subs_data.get('term', 0))
+        persons_count = int(subs_data.get('persons', 1))
+    except (TypeError, ValueError):
+        raise ValidationError('Неверный формат данных')
+    if not term or term not in {choice[0] for choice in SubscriptionPlan.DURATION_CHOICES}:
+        raise ValidationError('Неизвестная продолжительность подписки.')
+    if persons_count not in {choice[0] for choice in SubscriptionForm.PERSONS_CHOICES}:
+        raise ValidationError('Неверное количество персон.')
+    selected_meals = [
+        meal_type for meal_type in MealTypeChoices
+        if subs_data.get(str(meal_type.value)) in {'True', True}
+    ]
+    if not selected_meals:
+        raise ValidationError('Должен быть выбран хотя бы один приём пищи.')
+    return term, persons_count, selected_meals
+
+
+class OrderView(FormView):
     template_name = 'order.html'
     form_class = SubscriptionForm
     success_url = reverse_lazy('profile')
@@ -33,25 +54,29 @@ class OrderView(LoginRequiredMixin, FormView):
         return context
 
     def form_valid(self, form):
-        # TODO: валидацию на наличие оплаченной подписки, оплату и создание подписки
+        if not self.request.user.is_authenticated:
+            messages.warning(
+                self.request, 'Для оформления подписки необходимо войти в систему.',
+            )
+            return redirect('login')
+
+        if UserSubscription.objects.filter(user=self.request.user).exists():
+            messages.warning(self.request, 'У Вас уже есть оплаченная подписка.')
+            return redirect('profile')
+        cleaned_data = form.cleaned_data
+        term, persons_count, selected_meals = _validate_subscription_data(cleaned_data)
+        subscription = UserSubscription.objects.create(
+            user=self.request.user,
+            diet_type=cleaned_data['foodtype'],
+            selected_meal_types=selected_meals,
+            persons_count=persons_count,
+            plan=SubscriptionPlan.objects.get(duration=term),
+            end_date=timezone.now().date() + relativedelta(months=term),
+        )
+        subscription.allergies.set(cleaned_data['allergies'])
+        subscription.save()
         messages.success(self.request, 'Подписка успешно создана!')
         return super().form_valid(form)
-
-
-def _validate_subscription_data(subs_data: dict[str, Any]) -> tuple[int, int, list]:
-    term = int(subs_data.get('term', 0))
-    if not term or term not in {choice[0] for choice in SubscriptionPlan.DURATION_CHOICES}:
-        raise ValidationError('Неизвестная продолжительность подписки.')
-    persons_count = int(subs_data.get('persons', 1))
-    if persons_count not in {choice[0] for choice in SubscriptionForm.PERSONS_CHOICES}:
-        raise ValidationError('Неверное количество персон.')
-    selected_meals = [
-        meal_type for meal_type in MealTypeChoices
-        if subs_data.get(str(meal_type.value)) == 'True'
-    ]
-    if not selected_meals:
-        raise ValidationError('Должен быть выбран хотя бы один приём пищи.')
-    return term, persons_count, selected_meals
 
 
 class CalculateSubscription(View):
@@ -62,12 +87,14 @@ class CalculateSubscription(View):
             plan = SubscriptionPlan.objects.get(duration=term)
             total_price = plan.total_price(selected_meals) * persons_count
             return JsonResponse({'totalPrice': total_price}, status=200)
-        except json.JSONDecodeError as error:
-            return JsonResponse({'error': str(error)}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Неверный формат JSON'}, status=400)
         except ValidationError as error:
             return JsonResponse({'error': str(error)}, status=400)
+        except SubscriptionPlan.DoesNotExist:
+            return JsonResponse({'error': 'Выбранный план подписки не найден'}, status=400)
         except Exception:
-            return JsonResponse({'error': 'unexpected server error'}, status=500)
+            return JsonResponse({'error': 'Внутренняя ошибка сервера'}, status=500)
 
 
 class ProfileView(LoginRequiredMixin, FormView):
@@ -97,6 +124,16 @@ class ProfileView(LoginRequiredMixin, FormView):
             messages.error(self.request, f'Ошибка сохранения: {str(exc)}', extra_tags='danger')
             return self.form_invalid(form)
 
-    def form_invalid(self, form):
-        messages.error(self.request, 'Исправьте ошибки в форме.', extra_tags='danger')
-        return super().form_invalid(form)
+
+class UploadAvatarView(LoginRequiredMixin, View):
+    def post(self, request):
+        avatar = request.FILES.get('avatar')
+        if not avatar:
+            return JsonResponse({'success': False, 'error': 'No file provided.'})
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+            profile.avatar = avatar
+            profile.save()
+            return JsonResponse({'success': True, 'avatar_url': profile.avatar.url})
+        except Exception as exc:
+            return JsonResponse({'success': False, 'error': str(exc)}, status=400)
