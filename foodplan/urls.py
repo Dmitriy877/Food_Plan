@@ -9,6 +9,7 @@ from planner import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),
+    path('payments/', include('payments.urls')),
     path('', render, kwargs={'template_name': 'index.html'}, name='index'),
     path('order/', views.OrderView.as_view(), name='order'),
     path('order/calculate/', views.CalculateSubscription.as_view(), name='order_calculate'),

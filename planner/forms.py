@@ -55,6 +55,26 @@ class SubscriptionForm(forms.Form):
         required=False,
     )
 
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        term = int(cleaned_data.get('term', 0))
+        persons_count = int(cleaned_data.get('persons', 1))
+        if not term or term not in {choice[0] for choice in SubscriptionPlan.DURATION_CHOICES}:
+            raise ValidationError({'term': 'Неизвестная продолжительность подписки.'})
+        if persons_count not in {choice[0] for choice in SubscriptionForm.PERSONS_CHOICES}:
+            raise ValidationError({'persons': 'Неверное количество персон.'})
+        selected_meals = [
+            meal_type for meal_type in MealTypeChoices
+            if cleaned_data.get(str(meal_type.value)) is True
+        ]
+        if not selected_meals:
+            raise ValidationError('Должен быть выбран хотя бы один приём пищи.')
+        plan = SubscriptionPlan.objects.get(duration=term)
+        cleaned_data['total_price'] = float(plan.total_price(selected_meals) * persons_count)
+        cleaned_data['term'] = term
+        cleaned_data['persons'] = persons_count
+        return cleaned_data
+
 
 class UserProfileForm(forms.Form):
     username = forms.CharField(

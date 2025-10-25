@@ -80,6 +80,11 @@ class SubscriptionPlan(models.Model):
     def __str__(self) -> str:
         return f"{self.get_duration_display()} "
 
+    @classmethod
+    def get_duration_display_by_value(cls, duration_value):
+        choices_dict = dict(cls.DURATION_CHOICES)
+        return choices_dict.get(duration_value, 'Неизвестно')
+
     def get_price_by_meal_type(self, meal_type: MealTypeChoices):
         prices = {
             MealTypeChoices.BREAKFAST: self.breakfast_price,

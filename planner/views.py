@@ -3,8 +3,7 @@ from typing import Any
 
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
-from django.contrib.auth import get_user_model
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
@@ -85,10 +84,13 @@ class OrderView(FormView):
             messages.warning(self.request, 'У Вас уже есть оплаченная подписка.')
             return redirect('profile')
 
-        create_subscription(self.request.user, form.cleaned_data)
-        messages.success(self.request, 'Подписка успешно создана!')
-
-        return super().form_valid(form)
+        cleaned_data = form.cleaned_data.copy()
+        term = cleaned_data['term']
+        if 'allergies' in cleaned_data:
+            cleaned_data['allergies'] = [allergy.id for allergy in cleaned_data['allergies']]
+        cleaned_data['description'] = f'Подписка FoodPlan на {SubscriptionPlan.get_duration_display_by_value(term)}'
+        self.request.session['pending_subscription'] = cleaned_data
+        return redirect('yookassa_payment')
 
 
 class CalculateSubscription(View):
