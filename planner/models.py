@@ -150,6 +150,17 @@ class UserSubscription(models.Model):
     def total_price(self):
         return self.plan.total_price(self.selected_meal_types) * self.persons_count
 
+    @property
+    def meals_count(self):
+        return len(self.selected_meal_types)
+
+    @property
+    def has_allergies(self):
+        return self.allergies.exists()
+
+    def get_allergies_list(self):
+        return list(self.allergies.values_list('name', flat=True))
+
 
 def get_avatar_upload_path(instance, filename: str) -> str:
     extension = filename.rsplit('.', 1)[-1].lower()

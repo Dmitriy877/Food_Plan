@@ -3,6 +3,7 @@ from typing import Any
 
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
@@ -15,6 +16,8 @@ from django.views.generic import FormView
 
 from planner.forms import SubscriptionForm, UserProfileForm
 from planner.models import MealTypeChoices, SubscriptionPlan, UserProfile, UserSubscription
+
+User = get_user_model()
 
 
 def card(request):
@@ -40,6 +43,24 @@ def _validate_subscription_data(subs_data: dict[str, Any]) -> tuple[int, int, li
     return term, persons_count, selected_meals
 
 
+def create_subscription(
+    user: User,
+    subscription_data: dict[str, Any],
+) -> UserSubscription:
+    term, persons_count, selected_meals = _validate_subscription_data(subscription_data)
+    subscription = UserSubscription.objects.create(
+        user=user,
+        diet_type=subscription_data['foodtype'],
+        selected_meal_types=selected_meals,
+        persons_count=persons_count,
+        plan=SubscriptionPlan.objects.get(duration=term),
+        end_date=timezone.now().date() + relativedelta(months=term),
+    )
+    subscription.allergies.set(subscription_data['allergies'])
+    subscription.save()
+    return subscription
+
+
 class OrderView(FormView):
     template_name = 'order.html'
     form_class = SubscriptionForm
@@ -63,19 +84,10 @@ class OrderView(FormView):
         if UserSubscription.objects.filter(user=self.request.user).exists():
             messages.warning(self.request, 'У Вас уже есть оплаченная подписка.')
             return redirect('profile')
-        cleaned_data = form.cleaned_data
-        term, persons_count, selected_meals = _validate_subscription_data(cleaned_data)
-        subscription = UserSubscription.objects.create(
-            user=self.request.user,
-            diet_type=cleaned_data['foodtype'],
-            selected_meal_types=selected_meals,
-            persons_count=persons_count,
-            plan=SubscriptionPlan.objects.get(duration=term),
-            end_date=timezone.now().date() + relativedelta(months=term),
-        )
-        subscription.allergies.set(cleaned_data['allergies'])
-        subscription.save()
+
+        create_subscription(self.request.user, form.cleaned_data)
         messages.success(self.request, 'Подписка успешно создана!')
+
         return super().form_valid(form)
 
 
