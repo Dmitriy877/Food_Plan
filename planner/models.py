@@ -80,6 +80,11 @@ class SubscriptionPlan(models.Model):
     def __str__(self) -> str:
         return f"{self.get_duration_display()} "
 
+    @classmethod
+    def get_duration_display_by_value(cls, duration_value):
+        choices_dict = dict(cls.DURATION_CHOICES)
+        return choices_dict.get(duration_value, 'Неизвестно')
+
     def get_price_by_meal_type(self, meal_type: MealTypeChoices):
         prices = {
             MealTypeChoices.BREAKFAST: self.breakfast_price,
@@ -149,6 +154,17 @@ class UserSubscription(models.Model):
     @property
     def total_price(self):
         return self.plan.total_price(self.selected_meal_types) * self.persons_count
+
+    @property
+    def meals_count(self):
+        return len(self.selected_meal_types)
+
+    @property
+    def has_allergies(self):
+        return self.allergies.exists()
+
+    def get_allergies_list(self):
+        return list(self.allergies.values_list('name', flat=True))
 
 
 def get_avatar_upload_path(instance, filename: str) -> str:
