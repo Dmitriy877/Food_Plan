@@ -45,7 +45,7 @@ function uploadAvatar(file) {
     const originalSrc = avatarImage.src;
     avatarImage.style.opacity = '0.5';
 
-    fetch('{% url "upload_avatar" %}', {
+    fetch('/profile/upload-avatar/', {
         method: 'POST',
         body: formData
     })
