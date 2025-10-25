@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from planner.models import Allergy, SubscriptionPlan, UserProfile, UserSubscription
-from planner.models import Ingredient
+from planner.models import Ingredient, Dish
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -29,3 +29,9 @@ class AllergyAdmin(admin.ModelAdmin):
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('name', 'price', 'calories')
     list_filter = ('name',)
+
+
+@admin.register(Dish)
+class DishAdmin(admin.ModelAdmin):
+    list_display = ('name', 'diet_type', 'category')
+    list_filter = ('name', 'diet_type')
