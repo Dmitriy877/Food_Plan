@@ -9,13 +9,16 @@
                 <img src="{% static 'img/logo.8d8f24edbb5f.svg' %}" height="55" width="189" alt="">
             </a>
             <h3 class="text-secondary mt-2 me-2">Стоимость: <span id="total-price">{{ total_price }}</span>₽</h3>
-            <button form="order" type="submit" class="btn shadow-none btn-sm btn-outline-success foodplan_green foodplan__border_green">Оплатить</button>
+            <button form="order" type="submit"
+                    class="btn shadow-none btn-sm btn-outline-success foodplan_green foodplan__border_green">Оплатить
+            </button>
         </div>
     </nav>
 </header>
 <main style="margin-top: calc(2rem + 85px);">
     <section>
         <div class="container">
+            {% include 'partials/messages.html' %}
             <h1><strong class="foodplan_green">1 шаг </strong>до первого меню</h1>
             <h5 class="text-secondary mb-3">
                 Вам будет доступно 4 типа меню: Классическое, Низкоуглеводное, Вегетарианское и Кето.
@@ -37,9 +40,9 @@
 
             <h2><strong>Выберите подходящий тариф</strong></h2>
             <form method="POST" id="order">
-            {% csrf_token %}
-            <table class="table text-center text-truncate mb-5">
-                <tbody>
+                {% csrf_token %}
+                <table class="table text-center text-truncate mb-5">
+                    <tbody>
                     <tr>
                         <th scope="row" class="text-start">Срок</th>
                         <td>
@@ -83,18 +86,22 @@
                             {% endfor %}
                         </td>
                     </tr>
-                </tbody>
-            </table>
-            <button type="submit" id="TableSubmit" class="d-none"></button>
+                    </tbody>
+                </table>
+                <button type="submit" id="TableSubmit" class="d-none"></button>
             </form>
 
             <form class="card d-flex flex-row align-items-baseline mb-5 p-3 foodplan__bg_grey">
                 <label for="promo" class="form-label me-2">Промокод</label>
                 <input type="text" class="form-control me-2" id="promo">
-                <button type="submit" class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green">Применить</button>
+                <button type="submit" class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green">
+                    Применить
+                </button>
             </form>
             <div class="d-flex justify-content-center my-5">
-                <button form="order" type="submit" class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green w-50">Оплатить</button>
+                <button form="order" type="submit"
+                        class="btn shadow-none btn-outline-success foodplan_green foodplan__border_green w-50">Оплатить
+                </button>
             </div>
         </div>
     </section>
@@ -103,76 +110,76 @@
 {% block js_extra %}
 <script>
 
-function getSelectedMeals() {
-    const selectedMeals = {
-        breakfast: document.querySelector('select[name="breakfast"]'),
-        lunch: document.querySelector('select[name="lunch"]'),
-        dinner: document.querySelector('select[name="dinner"]'),
-        dessert: document.querySelector('select[name="dessert"]')
-    };
-    return selectedMeals;
-}
-
-function validateMealTypes() {
-    const mealSelects = Object.values(getSelectedMeals());
-    const atLeastOneSelected = mealSelects.some(select => select.value === 'True');
-    mealSelects.forEach(select => {
-        if (atLeastOneSelected) {
-            select.classList.remove('is-invalid');
-            select.title = '';
-        } else {
-            select.classList.add('is-invalid');
-            select.title = 'Выберите хотя бы один приём пищи';
-        }
-    });
-    const payButtons = document.querySelectorAll('button[form="order"]');
-    payButtons.forEach(payButton => {
-        payButton.disabled = !atLeastOneSelected;
-    });
-    if (!atLeastOneSelected) {
-        return false;
+    function getSelectedMeals() {
+        const selectedMeals = {
+            breakfast: document.querySelector('select[name="breakfast"]'),
+            lunch: document.querySelector('select[name="lunch"]'),
+            dinner: document.querySelector('select[name="dinner"]'),
+            dessert: document.querySelector('select[name="dessert"]')
+        };
+        return selectedMeals;
     }
-    return true;
-}
 
-function calculatePrice() {
-    const mealSelectors = getSelectedMeals();
-    const selectedMeals = {};
-    for (const key in mealSelectors) {
-        selectedMeals[key] = mealSelectors[key].value
-    };
-    const formData = {
-        term: document.querySelector('#term-select').value,
-        persons: document.querySelector('select[name="persons"]').value,
-        ...selectedMeals
-    };
-    fetch('{% url "order_calculate" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('total-price').textContent = data.totalPrice;
-    });
-    validateMealTypes();
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('select.form-select').forEach(select => {
-        select.addEventListener('change', calculatePrice);
-    });
-
-    document.getElementById('order').addEventListener('submit', function(event) {
-        if (!validateMealTypes()) {
-            event.preventDefault();
+    function validateMealTypes() {
+        const mealSelects = Object.values(getSelectedMeals());
+        const atLeastOneSelected = mealSelects.some(select => select.value === 'True');
+        mealSelects.forEach(select => {
+            if (atLeastOneSelected) {
+                select.classList.remove('is-invalid');
+                select.title = '';
+            } else {
+                select.classList.add('is-invalid');
+                select.title = 'Выберите хотя бы один приём пищи';
+            }
+        });
+        const payButtons = document.querySelectorAll('button[form="order"]');
+        payButtons.forEach(payButton => {
+            payButton.disabled = !atLeastOneSelected;
+        });
+        if (!atLeastOneSelected) {
+            return false;
         }
+        return true;
+    }
+
+    function calculatePrice() {
+        const mealSelectors = getSelectedMeals();
+        const selectedMeals = {};
+        for (const key in mealSelectors) {
+            selectedMeals[key] = mealSelectors[key].value
+        };
+        const formData = {
+            term: document.querySelector('#term-select').value,
+            persons: document.querySelector('select[name="persons"]').value,
+            ...selectedMeals
+        };
+        fetch('{% url "order_calculate" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(formData)
+        })
+            .then(response => response.json())
+            .then(data => {
+            document.getElementById('total-price').textContent = data.totalPrice;
+        });
+        validateMealTypes();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('select.form-select').forEach(select => {
+            select.addEventListener('change', calculatePrice);
+        });
+
+        document.getElementById('order').addEventListener('submit', function(event) {
+            if (!validateMealTypes()) {
+                event.preventDefault();
+            }
+        });
+        validateMealTypes();
     });
-    validateMealTypes();
-});
 
 </script>
 {% endblock %}

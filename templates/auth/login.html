@@ -5,6 +5,7 @@
 <main style="margin-top: calc(2rem + 85px);">
     <section>
         <div class="container">
+            {% include 'partials/messages.html' %}
             <div class="card p-3 mb-5 foodplan__shadow">
                 <a href="#" class="link-secondary fw-light foodplan__backButton">
                     <svg xmlns="http://www.w3.org/2000/svg" width="9%" height="9%" fill="currentColor" class="bi bi-arrow-left-circle"
@@ -31,7 +32,7 @@
                         <label for="email" class="form-label">Email</label>
                         <input type="email" class="form-control" id="email" name="username"
                                value="{% if form.username.value %}{{ form.username.value }}{% endif %}"
-                               aria-describedby="emailHelp" required>
+                               aria-describedby="emailHelp" required autofocus>
                     </div>
                     <div class="mb-3">
                         <div class="d-flex align-items-center justify-content-between">

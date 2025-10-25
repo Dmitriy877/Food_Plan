@@ -5,18 +5,7 @@
 <main style="margin-top: calc(2rem + 85px);">
     <section>
         <div class="container">
-            {% if messages %}
-            <div class="row">
-                <div class="col-12">
-                    {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
+            {% include 'partials/messages.html' %}
             <div class="row">
                 <div class="card col-12 p-3 mb-5 foodplan__shadow">
                     <h4 class="foodplan__backButton">
@@ -27,9 +16,16 @@
 
                 <div class="card col-12 col-md-2 p-3 mb-3 d-flex flex-column align-items-center foodplan__shadow">
                     <div class="position-relative">
-                        <img src="{% static 'img/test_avatar.png' %}" alt="" width="100" height="100" class="rounded-pill">
+                        <input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+                        {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="" width="100" height="100" class="rounded-pill" id="avatar-image">
+                        {% else %}
+                        <img src="{% static 'img/test_avatar.png' %}" alt="" width="100" height="100" class="rounded-pill" id="avatar-image">
+                        {% endif %}
                         <span class="badge rounded-circle position-absolute bottom-0 end-0 foodplan__bg_green avatar__plus">
-                            <a href="#" class="link-dark text-decoration-none align-middle">+</a>
+                            <label for="avatar-upload" class="link-dark text-decoration-none align-middle"
+                                    style="cursor: pointer;">+</label>
+                            <input type="file" id="avatar-upload" accept="image/*" class="d-none">
                         </span>
                     </div>
                     <h3 class="card-title text-center">{{ user.username }}</h3>
@@ -117,6 +113,7 @@
                                     <div class="col-2">
                                         <img src="{% static 'img/circle1.png' %}" alt="" class="w-100">
                                     </div>
+                                    {% if user.subscription %}
                                     <div class="col-10 col-md-10">
                                         <div class="row">
                                             <div class="col-12">
@@ -148,6 +145,29 @@
                                             </div>
                                         </div>
                                     </div>
+                                    {% else %}
+                                    <div class="col-10 col-md-10">
+                                        <div class="row justify-content-center text-center">
+                                            <div class="col-12">
+                                                <h2 class="text-muted mb-4">У вас пока нет активной подписки</h2>
+                                                <div class="mb-4">
+                                                    <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
+                                                    <p class="text-muted">Оформите подписку, чтобы получить доступ к персонализированному меню</p>
+                                                </div>
+                                                <div class="d-flex flex-column align-items-center">
+                                                    <div class="text-muted mb-3">
+                                                        <small>• Персонализированное меню</small><br>
+                                                        <small>• Разные типы питания</small><br>
+                                                        <small>• Учёт аллергий и предпочтений</small>
+                                                    </div>
+                                                    <a href="{% url 'order' %}" class="btn btn-outline-success foodplan_green foodplan__border_green">
+                                                        Оформить подписку
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -160,27 +180,5 @@
 {% include 'partials/footer.html' %}
 {% endblock %}
 {% block js_extra %}
-<script>
-document.getElementById('change-username').addEventListener('click', function(e) {
-    e.preventDefault();
-    const usernameField = document.getElementById('id_username');
-    usernameField.readOnly = !usernameField.readOnly;
-
-    if (!usernameField.readOnly) {
-        usernameField.focus();
-    }
-});
-
-document.getElementById('change-password').addEventListener('click', function(e) {
-    e.preventDefault();
-    const passwordField1 = document.getElementById('id_new_password1');
-    const passwordField2 = document.getElementById('id_new_password2');
-    passwordField1.readOnly = !passwordField1.readOnly;
-    passwordField2.readOnly = !passwordField2.readOnly;
-
-    if (!passwordField1.readOnly) {
-        passwordField1.focus();
-    }
-});
-</script>
+<script src="{% static 'js/profile.js' %}"></script>
 {% endblock %}
