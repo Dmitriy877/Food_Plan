@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -95,7 +96,7 @@ class SubscriptionPlan(models.Model):
         return prices.get(meal_type, 0)
 
     def total_price(self, selected_meal_types: list[MealTypeChoices]):
-        total = 0
+        total = Decimal('0')
         for meal_type in selected_meal_types:
             total += self.get_price_by_meal_type(meal_type)
         return total
@@ -167,10 +168,13 @@ class UserSubscription(models.Model):
         return list(self.allergies.values_list('name', flat=True))
 
 
-def get_avatar_upload_path(instance, filename: str) -> str:
+def get_unique_filename(filename: str) -> str:
     extension = filename.rsplit('.', 1)[-1].lower()
-    unique_name = f'{uuid.uuid4().hex}.{extension}'
-    return f'avatars/{unique_name}'
+    return f'{uuid.uuid4().hex}.{extension}'
+
+
+def get_avatar_upload_path(instance, filename: str) -> str:
+    return f'avatars/{get_unique_filename(filename)}'
 
 
 class UserProfile(models.Model):
@@ -179,13 +183,6 @@ class UserProfile(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
         related_name='profile',
-    )
-    budget_limit = models.DecimalField(
-        'Ограничение по стоимости',
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
     )
     avatar = models.ImageField(
         'Аватар',
@@ -210,16 +207,14 @@ class Ingredient(models.Model):
         ('tbsp', 'Столовые ложки'),
         ('tsp', 'Чайные ложки'),
     ]
-    name = models.CharField(max_length=150, verbose_name='Название ингредиента')
+    name = models.CharField(
+        'Название ингредиента',
+        max_length=150,
+    )
     allergens = models.ManyToManyField(
         Allergy,
         blank=True,
         verbose_name='Аллергены',
-    )
-    price = models.DecimalField(
-        'Стоимость за единицу',
-        max_digits=10,
-        decimal_places=2,
     )
     calories = models.DecimalField(
         'Калорийность',
@@ -234,14 +229,33 @@ class Ingredient(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Ингридиент'
-        verbose_name_plural = 'Ингридиенты'
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
         return f'{self.name} ({self.get_unit_display()})'
 
 
+def get_dish_upload_path(instance, filename: str) -> str:
+    return f'dishes/{get_unique_filename(filename)}'
+
+
+class DishManager(models.Manager):
+    def get_dishes_for_subscription(self, subscription):
+        return self.filter(
+            diet_type=subscription.diet_type,
+            category__in=subscription.selected_meal_types,
+        ).exclude(
+            ingredients__allergens__in=subscription.allergies.all()
+        ).distinct()
+
+
 class Dish(models.Model):
+    DIFFICULTY_CHOICES = [
+        ('easy', 'Легко'),
+        ('medium', 'Средне'),
+        ('hard', 'Сложно'),
+    ]
     name = models.CharField(
         'Название блюда',
         max_length=150,
@@ -258,13 +272,12 @@ class Dish(models.Model):
         'Фото блюда',
         blank=True,
         null=True,
-        upload_to='dishes/',
+        upload_to=get_dish_upload_path,
     )
     diet_type = models.CharField(
         'Тип меню',
         choices=DietTypeChoices.choices,
-        null=True,
-        blank=True,
+        default=DietTypeChoices.CLASSIC,
         db_index=True,
     )
     ingredients = models.ManyToManyField(
@@ -279,28 +292,65 @@ class Dish(models.Model):
         default=MealTypeChoices.LUNCH,
         db_index=True,
     )
+    cooking_time = models.PositiveIntegerField(
+        'Время приготовления (мин)',
+        default=30,
+        help_text='Время в минутах'
+    )
+    difficulty = models.CharField(
+        'Сложность приготовления',
+        max_length=10,
+        choices=DIFFICULTY_CHOICES,
+        default='medium'
+    )
+    portions = models.PositiveIntegerField(
+        'Количество порций',
+        default=1,
+        help_text='На сколько персон рассчитано блюдо'
+    )
 
-    @property
-    def total_price(self):
-        """Считаем общую стоимость блюда"""
-        return sum(
-            di.quantity * di.ingredient.price
-            for di in self.dishingredient_set.all()
-        )
-
-    @property
-    def total_calories(self):
-        return sum(
-            di.quantity * di.ingredient.calories
-            for di in self.dishingredient_set.all()
-        )
+    objects = DishManager()
 
     class Meta:
         verbose_name = 'Блюдо'
         verbose_name_plural = 'Блюда'
+        indexes = [
+            models.Index(fields=['diet_type', 'category']),
+        ]
 
     def __str__(self):
         return self.name
+
+    @property
+    def total_calories(self):
+        total = Decimal('0')
+        for di in self.dishingredient_set.select_related('ingredient').all():
+            total += di.ingredient.calories * di.quantity
+        return total.quantize(Decimal('0.01'))
+
+    @property
+    def calories_per_portion(self):
+        if self.portions > 0:
+            return (self.total_calories / self.portions).quantize(Decimal('0.01'))
+        return Decimal('0')
+
+    @property
+    def is_vegetarian(self):
+        non_veg_keywords = ['мясо', 'куриц', 'говядин', 'свинин', 'баранин', 'рыб', 'морепродукт']
+        return not any(keyword in self.name.lower() or
+                       any(keyword in ing.name.lower() for ing in self.ingredients.all())
+                       for keyword in non_veg_keywords)
+
+    def get_ingredients_list(self):
+        return [
+            {
+                'name': di.ingredient.name,
+                'quantity': di.quantity,
+                'unit': di.ingredient.get_unit_display(),
+                'calories': (di.ingredient.calories * di.quantity).quantize(Decimal('0.01'))
+            }
+            for di in self.dishingredient_set.select_related('ingredient').all()
+        ]
 
 
 class DishIngredient(models.Model):
@@ -319,8 +369,13 @@ class DishIngredient(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Ингридиент блюда'
-        verbose_name_plural = 'Ингридиенты блюд'
+        verbose_name = 'Ингредиент блюда'
+        verbose_name_plural = 'Ингредиенты блюд'
+        unique_together = ['dish', 'ingredient']
 
     def __str__(self):
-        return f'{self.ingredient} - {self.quantity}'
+        return f'{self.ingredient.name} - {self.quantity} {self.ingredient.get_unit_display()}'
+
+    @property
+    def total_calories(self):
+        return (self.ingredient.calories * self.quantity).quantize(Decimal('0.01'))
