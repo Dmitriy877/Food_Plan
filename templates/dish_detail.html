@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ dish.name }} - План питания{% endblock %}
+{% block content %}
+
+<header>
+    <nav class="navbar navbar-expand-md navbar-light fixed-top navbar__opacity">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'profile' %}">
+                <img src="{% static 'img/logo.8d8f24edbb5f.svg' %}" height="55" width="189" alt="">
+            </a>
+            <button class="btn btn-outline-success me-2 shadow-none foodplan_green foodplan__border_green" onclick="history.back()">Назад</button>
+        </div>
+    </nav>
+</header>
+<main style="margin-top: calc(2rem + 75px);">
+        <section>
+            <div class="container">
+                <div class="row">
+                    <div class="col-12 col-md-4 d-flex justify-content-center">
+                        <div class="card foodplan__card_borderless">
+                            {% if dish.photo %}
+                                <img src="{{ dish.photo.url }}" alt="{{ dish.name }}" class="img-fluid rounded">
+                            {% else %}
+                                <img src="{% static 'img/circle1.png' %}" alt="{{ dish.name }}">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 d-flex flex-column justify-content-between">
+                        <h2>{{ dish.name }}</h2>
+                        <div class="mb-3">
+                            <span class="badge bg-success">{{ dish.get_diet_type_display }}</span>
+                            <span class="badge bg-info">{{ dish.get_category_display }}</span>
+                            <span class="badge bg-warning">{{ dish.get_difficulty_display }}</span>
+                        </div>
+
+                        <h5>Ингредиенты:</h5>
+                        <ul class="list-group list-group-flush">
+                            {% for ingredient in dish.dishingredient_set.all %}
+                            <li class="list-group-item">
+                                {{ ingredient.ingredient.name }} ({{ ingredient.quantity }} {{ ingredient.ingredient.get_unit_display }})
+                            </li>
+                            {% endfor %}
+                        </ul>
+
+                        <div class="mt-3">
+                            <h6>Общая калорийность: {{ dish.total_calories|floatformat:0 }} ккал</h6>
+                            <h6>Время приготовления: {{ dish.cooking_time }} минут</h6>
+                            <h6>Порций: {{ dish.portions }}</h6>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Рецепт -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title">Рецепт приготовления</h4>
+                                <p class="card-text">{{ dish.recipe|linebreaks }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+{% include 'partials/footer.html' %}
+{% endblock %}
