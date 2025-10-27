@@ -1,3 +1,4 @@
+import random
 import uuid
 from decimal import Decimal
 
@@ -246,7 +247,7 @@ class DishManager(models.Manager):
             diet_type=subscription.diet_type,
             category__in=subscription.selected_meal_types,
         ).exclude(
-            ingredients__allergens__in=subscription.allergies.all()
+            ingredients__allergens__in=subscription.allergies.all(),
         ).distinct()
 
 
@@ -295,18 +296,18 @@ class Dish(models.Model):
     cooking_time = models.PositiveIntegerField(
         'Время приготовления (мин)',
         default=30,
-        help_text='Время в минутах'
+        help_text='Время в минутах',
     )
     difficulty = models.CharField(
         'Сложность приготовления',
         max_length=10,
         choices=DIFFICULTY_CHOICES,
-        default='medium'
+        default='medium',
     )
     portions = models.PositiveIntegerField(
         'Количество порций',
         default=1,
-        help_text='На сколько персон рассчитано блюдо'
+        help_text='На сколько персон рассчитано блюдо',
     )
 
     objects = DishManager()
@@ -347,7 +348,7 @@ class Dish(models.Model):
                 'name': di.ingredient.name,
                 'quantity': di.quantity,
                 'unit': di.ingredient.get_unit_display(),
-                'calories': (di.ingredient.calories * di.quantity).quantize(Decimal('0.01'))
+                'calories': (di.ingredient.calories * di.quantity).quantize(Decimal('0.01')),
             }
             for di in self.dishingredient_set.select_related('ingredient').all()
         ]
@@ -379,3 +380,135 @@ class DishIngredient(models.Model):
     @property
     def total_calories(self):
         return (self.ingredient.calories * self.quantity).quantize(Decimal('0.01'))
+
+
+class DailyMenu(models.Model):
+    user = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+        related_name='daily_menus',
+    )
+    date = models.DateField(
+        'Дата меню',
+        default=timezone.now,
+    )
+    created_at = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True,
+    )
+
+    class Meta:
+        verbose_name = 'Дневное меню'
+        verbose_name_plural = 'Дневные меню'
+        unique_together = ['user', 'date']
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"Меню {self.user.username} на {self.date}"
+
+    @property
+    def total_calories(self):
+        total = Decimal('0')
+        for meal in self.meals.select_related('dish').all():
+            total += meal.dish.total_calories
+        return total.quantize(Decimal('0.01'))
+
+    @property
+    def total_cooking_time(self):
+        total = 0
+        for meal in self.meals.select_related('dish').all():
+            total += meal.dish.cooking_time
+        return total
+
+    @property
+    def meals_count(self):
+        return self.meals.count()
+
+    @classmethod
+    def generate_for_user(cls, user):
+        if not hasattr(user, 'subscription') or not user.subscription.is_active:
+            return None
+
+        subscription = user.subscription
+        today = timezone.now().date()
+        cls.objects.filter(user=user, date=today).delete()
+        daily_menu = cls.objects.create(user=user, date=today)
+
+        available_dishes = Dish.objects.get_dishes_for_subscription(subscription)
+
+        for meal_type in subscription.selected_meal_types:
+            meal_dishes = available_dishes.filter(category=meal_type)
+            if meal_dishes.exists():
+                selected_dish = random.choice(list(meal_dishes))
+                DailyMeal.objects.create(
+                    daily_menu=daily_menu,
+                    meal_type=meal_type,
+                    dish=selected_dish,
+                )
+
+        return daily_menu
+
+    @classmethod
+    def get_todays_menu_for_user(cls, user):
+        if not hasattr(user, 'subscription') or not user.subscription.is_active:
+            return None
+
+        try:
+            today = timezone.now().date()
+            return cls.objects.get(user=user, date=today)
+        except cls.DoesNotExist:
+            return cls.generate_for_user(user)
+
+    @classmethod
+    def get_todays_menu_with_dishes(cls, user):
+        daily_menu = cls.get_todays_menu_for_user(user)
+        if daily_menu:
+            meals_dict = {
+                meal.meal_type: meal.dish
+                for meal in daily_menu.meals.select_related('dish').all()
+            }
+            return {
+                'menu': daily_menu,
+                'meals': meals_dict
+            }
+        return None
+
+    def get_meals_by_type(self):
+        return {meal.meal_type: meal.dish for meal in self.meals.select_related('dish').all()}
+
+
+class DailyMeal(models.Model):
+    daily_menu = models.ForeignKey(
+        DailyMenu,
+        on_delete=models.CASCADE,
+        verbose_name='Дневное меню',
+        related_name='meals',
+    )
+    meal_type = models.CharField(
+        'Тип приема пищи',
+        max_length=20,
+        choices=MealTypeChoices.choices,
+    )
+    dish = models.ForeignKey(
+        Dish,
+        on_delete=models.CASCADE,
+        verbose_name='Блюдо',
+    )
+
+    class Meta:
+        verbose_name = 'Прием пищи'
+        verbose_name_plural = 'Приемы пищи'
+        unique_together = ['daily_menu', 'meal_type']
+        ordering = ['meal_type']
+
+    def __str__(self):
+        return f"{self.get_meal_type_display()} - {self.dish.name}"
+
+    @property
+    def calories(self):
+        return self.dish.total_calories
+
+    @property
+    def cooking_time(self):
+        return self.dish.cooking_time

@@ -11,10 +11,10 @@ from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
-from django.views.generic import FormView
+from django.views.generic import FormView, DetailView
 
 from planner.forms import SubscriptionForm, UserProfileForm
-from planner.models import MealTypeChoices, SubscriptionPlan, UserProfile, UserSubscription
+from planner.models import MealTypeChoices, SubscriptionPlan, UserProfile, UserSubscription, DailyMenu, Dish
 
 User = get_user_model()
 
@@ -121,6 +121,17 @@ class ProfileView(LoginRequiredMixin, FormView):
         kwargs['user'] = self.request.user
         return kwargs
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        menu_data = DailyMenu.get_todays_menu_for_user(user)
+        if menu_data:
+            context['daily_menu'] = menu_data['menu']
+            context['daily_meals'] = menu_data['meals']
+
+        return context
+
     def form_valid(self, form):
         try:
             original_username = self.request.user.username
@@ -151,3 +162,23 @@ class UploadAvatarView(LoginRequiredMixin, View):
             return JsonResponse({'success': True, 'avatar_url': profile.avatar.url})
         except Exception as exc:
             return JsonResponse({'success': False, 'error': str(exc)}, status=400)
+
+
+class RegenerateMenuView(LoginRequiredMixin, View):
+    def post(self, request):
+        daily_menu = DailyMenu.generate_for_user(request.user)
+        if daily_menu:
+            messages.success(request, 'Меню успешно обновлено!')
+
+        return redirect('profile')
+
+
+class DishDetailView(LoginRequiredMixin, DetailView):
+    model = Dish
+    template_name = 'dish_detail.html'
+    context_object_name = 'dish'
+
+    def get_queryset(self):
+        if hasattr(self.request.user, 'subscription'):
+            return Dish.objects.get_dishes_for_subscription(self.request.user.subscription)
+        return Dish.objects.none()
