@@ -98,18 +98,6 @@ python manage.py runserver
 
 Перейдите в админ-панель `http://127.0.0.1:8000/admin`, создайте блюда и игредиенты
 
-## Переменные окружения
-
-Часть настроек проекта берётся из переменных окружения. Чтобы их определить, создайте файл `.env` в каталге проекта рядом с файлом `manage.py` и запишите туда данные в таком формате: `ПЕРЕМЕННАЯ=значение`.
-
-```sh
-SECRET_KEY=django_secret_key (Секретный [ключ](https://docs.djangoproject.com/en/5.2/ref/settings/#secret-key) приложения Django)
-ALLOWED_HOSTS =127.0.0.1 (Допустимые [хосты](https://docs.djangoproject.com/en/5.2/ref/settings/#allowed-hosts) для приложения Django)
-DEBUG = FALSE ([Дебаг](https://docs.djangoproject.com/en/5.2/ref/settings/#debug) режим приложения Django)
-YOOKASSA_SHOP_ID=ID сервиса оплаты ЮКасса
-YOOKASSA_SECRET_KEY=Секретный ключ сервиса оплаты ЮКасса
-```
-
 ---
 ## Цели проекта
 
