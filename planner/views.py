@@ -7,20 +7,16 @@ from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
-from django.views.generic import FormView, DetailView
+from django.views.generic import DetailView, FormView
 
 from planner.forms import SubscriptionForm, UserProfileForm
-from planner.models import MealTypeChoices, SubscriptionPlan, UserProfile, UserSubscription, DailyMenu, Dish
+from planner.models import DailyMenu, Dish, MealTypeChoices, SubscriptionPlan, UserProfile, UserSubscription
 
 User = get_user_model()
-
-
-def card(request):
-    return render(request, 'card1.html')
 
 
 def _validate_subscription_data(subs_data: dict[str, Any]) -> tuple[int, int, list]:
@@ -125,10 +121,12 @@ class ProfileView(LoginRequiredMixin, FormView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
 
-        menu_data = DailyMenu.get_todays_menu_for_user(user)
+        menu_data = DailyMenu.get_todays_menu_with_dishes(user)
         if menu_data:
             context['daily_menu'] = menu_data['menu']
             context['daily_meals'] = menu_data['meals']
+
+        context['meal_types'] = MealTypeChoices.choices
 
         return context
 

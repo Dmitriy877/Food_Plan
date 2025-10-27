@@ -1,8 +1,15 @@
 from django.contrib import admin
 
 from planner.models import (
-    Allergy, Dish, DishIngredient, Ingredient, SubscriptionPlan,
-    UserProfile, UserSubscription, DailyMenu, DailyMeal
+    Allergy,
+    DailyMeal,
+    DailyMenu,
+    Dish,
+    DishIngredient,
+    Ingredient,
+    SubscriptionPlan,
+    UserProfile,
+    UserSubscription,
 )
 
 

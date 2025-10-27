@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
+from django.urls import reverse_lazy
 from environs import env
 
 env.read_env()
@@ -88,8 +89,8 @@ DATABASES = {
 
 # AUTH
 AUTH_USER_MODEL = 'users.CustomUser'
-LOGIN_REDIRECT_URL = '/profile/'
-LOGIN_URL = '/users/login/'
+LOGIN_REDIRECT_URL = reverse_lazy('profile')
+LOGIN_URL = reverse_lazy('login')
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 

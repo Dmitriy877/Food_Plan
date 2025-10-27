@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load meal_tags %}
 {% block content %}
 {% include 'partials/header.html' %}
 <main style="margin-top: calc(2rem + 85px);">
@@ -121,14 +122,84 @@
                                 </div>
                                 {% if user.subscription %}
                                 <div class="col-10 col-md-10">
-                                    <div class="row">
+                                    <div class="row mb-4">
                                         <div class="col-12">
-                                            <h2>{{ user.subscription.get_diet_type_display }} меню</h2>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h2>{{ user.subscription.get_diet_type_display }} меню</h2>
+                                                {% if user.subscription.is_active %}
+                                                <form method="POST" action="{% url 'regenerate_menu' %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-outline-success btn-sm">
+                                                        Обновить меню
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+                                            {% if daily_menu %}
+                                            <p class="text-muted mb-0">Меню на {{ daily_menu.date }}</p>
+                                            {% endif %}
                                         </div>
+                                    </div>
+
+                                    <div class="row">
                                         <div class="col-md-12 col-lg-9">
-                                            <h6>Описание подписки
-                                            </h6>
+                                            <!-- Дневное меню -->
+                                            {% if daily_meals %}
+                                                <h5 class="mb-3">Блюда на сегодня</h5>
+                                                {% for meal_type_key, meal_type_label in meal_types %}
+                                                    {% if meal_type_key in daily_meals %}
+                                                    {% with dish=daily_meals|get_item:meal_type_key %}
+                                                    <div class="card mb-3">
+                                                        <div class="card-body">
+                                                            <div class="row">
+                                                                <div class="col-12">
+                                                                    <h6 class="text-success">{{ meal_type_label }}</h6>
+                                                                    <h5>{{ dish.name }}</h5>
+
+                                                                    <ul class="list-group list-group-flush mb-3">
+                                                                        {% for ingredient in dish.dishingredient_set.all|slice:":5" %}
+                                                                        <li class="list-group-item">
+                                                                            {{ ingredient.ingredient.name }} ({{ ingredient.quantity }} {{ ingredient.ingredient.get_unit_display }})
+                                                                        </li>
+                                                                        {% endfor %}
+                                                                        {% if dish.dishingredient_set.count > 5 %}
+                                                                        <li class="list-group-item text-muted">
+                                                                            ... и еще {{ dish.dishingredient_set.count|add:"-5" }} ингредиентов
+                                                                        </li>
+                                                                        {% endif %}
+                                                                    </ul>
+
+                                                                    <div class="d-flex justify-content-between align-items-center">
+                                                                        <h6 class="mb-0">Общая калорийность: {{ dish.total_calories|floatformat:0 }} Кал</h6>
+                                                                        <a href="{% url 'dish_detail' dish.id %}"
+                                                                           class="btn btn-outline-success btn-sm">
+                                                                            Подробнее
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endwith %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% elif user.subscription.is_active %}
+                                                <div class="text-center py-4">
+                                                    <p class="text-muted">Меню не сгенерировано</p>
+                                                    <form method="POST" action="{% url 'regenerate_menu' %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-success">
+                                                            Сгенерировать меню
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            {% else %}
+                                                <div class="alert alert-warning">
+                                                    Ваша подписка неактивна. Для получения меню необходимо продлить подписку.
+                                                </div>
+                                            {% endif %}
                                         </div>
+
                                         <div class="col-md-12 col-lg-3 text-muted d-flex flex-column justify-content-between">
                                             <div class="d-flex flex-row justify-content-between">
                                                 <small>Персоны: </small>
@@ -153,13 +224,28 @@
                                             {% endif %}
                                             <div class="d-flex flex-row justify-content-between">
                                                 <small>Калории: </small>
-                                                <small>2400</small>
+                                                <small>
+                                                    {% if daily_menu %}
+                                                        {{ daily_menu.total_calories|floatformat:0 }}
+                                                    {% else %}
+                                                        0
+                                                    {% endif %}
+                                                </small>
+                                            </div>
+                                            <div class="d-flex flex-row justify-content-between">
+                                                <small>Время готовки: </small>
+                                                <small>
+                                                    {% if daily_menu %}
+                                                        {{ daily_menu.total_cooking_time }} мин
+                                                    {% else %}
+                                                        0 мин
+                                                    {% endif %}
+                                                </small>
                                             </div>
                                             <div class="d-flex flex-row justify-content-between">
                                                 <small>Кол-во приёмов пищи: </small>
                                                 <small>{{ user.subscription.meals_count }}</small>
                                             </div>
-
                                         </div>
                                     </div>
                                 </div>
@@ -200,5 +286,100 @@
 {% include 'partials/footer.html' %}
 {% endblock %}
 {% block js_extra %}
-<script src="{% static 'js/profile.js' %}"></script>
+<script>
+document.getElementById('change-username').addEventListener('click', function(e) {
+    e.preventDefault();
+    const usernameField = document.getElementById('id_username');
+    usernameField.readOnly = !usernameField.readOnly;
+
+    if (!usernameField.readOnly) {
+        usernameField.focus();
+        usernameField.select();
+    }
+});
+
+document.getElementById('change-password').addEventListener('click', function(e) {
+    e.preventDefault();
+    const passwordField1 = document.getElementById('id_new_password1');
+    const passwordField2 = document.getElementById('id_new_password2');
+    passwordField1.readOnly = !passwordField1.readOnly;
+    passwordField2.readOnly = !passwordField2.readOnly;
+
+    if (!passwordField1.readOnly) {
+        passwordField1.focus();
+    }
+});
+
+document.getElementById('avatar-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (!file.type.match('image.*')) {
+            alert('Пожалуйста, выберите файл изображения.');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Размер файла не должен превышать 5MB.');
+            return;
+        }
+        uploadAvatar(file);
+    }
+});
+
+function uploadAvatar(file) {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    formData.append('csrfmiddlewaretoken', document.getElementById('csrf_token').value);
+
+    const avatarImage = document.getElementById('avatar-image');
+    const originalSrc = avatarImage.src;
+    avatarImage.style.opacity = '0.5';
+
+    fetch('{% url "upload_avatar" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            avatarImage.src = data.avatar_url + '?t=' + new Date().getTime(); // Добавляем timestamp для избежания кэширования
+            showMessage('Аватар успешно обновлен!', 'success');
+        } else {
+            throw new Error(data.error || 'Ошибка загрузки');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        avatarImage.src = originalSrc;
+        showMessage('Ошибка загрузки аватара: ' + error.message, 'danger');
+    })
+    .finally(() => {
+        avatarImage.style.opacity = '1';
+        document.getElementById('avatar-upload').value = '';
+    });
+}
+
+function showMessage(message, type) {
+    let messageContainer = document.getElementById('avatar-messages');
+    if (!messageContainer) {
+        messageContainer = document.createElement('div');
+        messageContainer.id = 'avatar-messages';
+        document.querySelector('.container').prepend(messageContainer);
+    }
+
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    messageContainer.appendChild(alertDiv);
+
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
 {% endblock %}

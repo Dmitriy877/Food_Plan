@@ -470,7 +470,7 @@ class DailyMenu(models.Model):
             }
             return {
                 'menu': daily_menu,
-                'meals': meals_dict
+                'meals': meals_dict,
             }
         return None
 
